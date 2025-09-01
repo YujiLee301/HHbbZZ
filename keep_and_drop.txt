@@ -42,7 +42,7 @@ keep D_*
 keep lep*
 keep *Weight
 keep *Weight*
-# keep nPhoton
+# keep nPhotonF
 # keep Photon*
 # keep nElectron
 # keep Electron*
@@ -107,3 +107,6 @@ keep genWeight
 #keep Jet_*
 keep Muon*
 keep invjj
+keep GENjet_hadronFlavour
+keep goodJet*
+keep Electron*

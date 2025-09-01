@@ -28,7 +28,7 @@ int GenAnalysis::mothermotherID(int Genidx){
 }
 void GenAnalysis::SetGenVariables(){
     TLorentzVector GENmom1, GENmom2;
-    TLorentzVector LS3_Z1_1, LS3_Z1_2, LS3_Z2_1, LS3_Z2_2, GEN_HVec;
+    TLorentzVector LS3_Z1_1, LS3_Z1_2, LS3_Z2_1, LS3_Z2_2, GENgoodj1,GENgoodj2,GEN_H1Vec,GEN_H2Vec;
     int GENmom1_id=-999, GENmom2_id=-999;
     int counter_initParticle=0;
     for(unsigned int genpidx=0; genpidx<nGenPart; genpidx++){
@@ -44,12 +44,33 @@ void GenAnalysis::SetGenVariables(){
                  GENmom2.SetPtEtaPhiM(GenPart_pt[genpidx],GenPart_eta[genpidx],GenPart_phi[genpidx],GenPart_mass[genpidx]);
                  GENmom2_id=GenPart_pdgId[genpidx];
              }
+             if (counter_initParticle>2) {
+                 std::cout<< "Warning: more than 2 initial particles found in the event! "<< std::endl;
+                 return; 
+             }
         }
 
         if (abs(GenPart_pdgId[genpidx])==11 || abs(GenPart_pdgId[genpidx])==13 || abs(GenPart_pdgId[genpidx])==15){
-            if(!(GenPart_status[genpidx]==1 || abs(GenPart_pdgId[genpidx])==15)) continue;
-            if (!(abs(motherID(genpidx))==23 || abs(motherID(genpidx))==443 || abs(motherID(genpidx))==553 || abs(motherID(genpidx))==24) ) continue;
-
+            if (!(GenPart_status[genpidx]==1 || abs(GenPart_pdgId[genpidx])==15)) continue;
+            if (!(abs(motherID(genpidx))==23 || abs(motherID(genpidx))==443 || abs(motherID(genpidx))==553 || abs(motherID(genpidx))==24 || abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331 ) ) continue;
+            //if ((abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331)&&(abs(mothermotherID(genpidx))==23)){
+            //    std::cout << "Keep lepton: PDG ID = " << GenPart_pdgId[genpidx]
+            //      << ", status = " << GenPart_status[genpidx]
+            //      << ", mother PDG ID = " << motherID(genpidx) 
+            //      << ", mother mother PDG ID = "<< mothermotherID(genpidx) << std::endl;
+            //}
+            if (abs(GenPart_pdgId[genpidx]) == 15) {
+                bool hasStableLepDaughter = false;
+                for (unsigned int d = 0; d < GenPart_pdgId.size(); ++d){
+                    if (GenPart_genPartIdxMother[d] != (int)genpidx) continue;
+                    if ((abs(GenPart_pdgId[d])==11 || abs(GenPart_pdgId[d])==13) && GenPart_status[d]==1){
+                        hasStableLepDaughter = true;
+                        break;
+                    }
+                }
+                if (!hasStableLepDaughter) continue;
+            }
+            
             nGENLeptons++;
             // Collect FSR photons
             TLorentzVector lep_dressed;
@@ -72,6 +93,13 @@ void GenAnalysis::SetGenVariables(){
                 }
             } // Dressed leptons loop
             GENlep_id.push_back( GenPart_pdgId[genpidx]);
+            total_GEN_lepton_count_allEvents++;
+            if (abs(GenPart_pdgId[genpidx]) == 15) {
+                total_GEN_tau_count_allEvents++;
+            }
+            //std::cout << "Total GEN leptons (all events): " << total_GEN_lepton_count_allEvents << std::endl;
+            //std::cout << "Total GEN taus (all events): " << total_GEN_tau_count_allEvents << std::endl;
+
             GENlep_status.push_back(GenPart_status[genpidx]);
             GENlep_pt.push_back( lep_dressed.Pt() );
             GENlep_eta.push_back( lep_dressed.Eta() );
@@ -166,7 +194,9 @@ void GenAnalysis::SetGenVariables(){
     if (nFiducialLeptons>=4 && nFiducialPtLead>=1 && nFiducialPtSublead>=2 ){
         // START FIDUCIAL EVENT TOPOLOGY CUTS
         unsigned int L1=99; unsigned int L2=99; unsigned int L3=99; unsigned int L4=99;
-        GENmass4l = -1.0; GENmass4e = -1.0; GENmass4mu = -1.0; GENmass2e2mu = -1.0;
+        unsigned int j1=99; unsigned int j2=99; unsigned int j3=99; unsigned int j4=99;
+        unsigned int h1=99; unsigned int h2=99;
+        GENmass4l = -1.0;GENmass2j = -1.0; GENmass4e = -1.0; GENmass4mu = -1.0; GENmass2e2mu = -1.0;
         GENmassZ1 = -1.0; GENmassZ2 = -1.0; GENpT4l = -1.0; GENeta4l = 999.; GENrapidity4l = 999.; GENphi4l = 999.;
         GENpT4lj = -1.0; GENpT4ljj=-1.0; GENmass4lj = -1.0; GENmass4ljj=-1.0;
 
@@ -203,7 +233,7 @@ void GenAnalysis::SetGenVariables(){
             LS3_Z1_2.SetPtEtaPhiM(GENlep_pt[L2],GENlep_eta[L2],GENlep_phi[L2],GENlep_mass[L2]);
             LS3_Z2_1.SetPtEtaPhiM(GENlep_pt[L3],GENlep_eta[L3],GENlep_phi[L3],GENlep_mass[L3]);
             LS3_Z2_2.SetPtEtaPhiM(GENlep_pt[L4],GENlep_eta[L4],GENlep_phi[L4],GENlep_mass[L4]);
-            GEN_HVec = LS3_Z1_1 + LS3_Z1_2 + LS3_Z2_1 + LS3_Z2_2;
+            GEN_H1Vec = LS3_Z1_1 + LS3_Z1_2 + LS3_Z2_1 + LS3_Z2_2;
 
             GENmass4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).M();
 
@@ -271,7 +301,8 @@ void GenAnalysis::SetGenVariables(){
             for(unsigned genjetidx=0; genjetidx<GenJet_pt.size(); genjetidx++) {
 
                 double pt = GenJet_pt[genjetidx];  double eta = GenJet_eta[genjetidx];
-                if (pt<30.0 || abs(eta)>4.7) continue;
+                //if (pt<30.0 || abs(eta)>2.4) continue;
+                if (abs(eta)>4.7) continue; 
 
                 bool inDR_pt30_eta4p7 = false;
                 unsigned int N=GENlep_pt.size();
@@ -295,6 +326,8 @@ void GenAnalysis::SetGenVariables(){
                     GENjet_eta.push_back(GenJet_eta[genjetidx]);
                     GENjet_phi.push_back(GenJet_phi[genjetidx]);
                     GENjet_mass.push_back(GenJet_mass[genjetidx]);
+                    GENjet_hadronFlavour.push_back(GenJet_hadronFlavour[genjetidx]);
+
                     if (pt>GENpt_leadingjet_pt30_eta4p7) {
                         GENpt_leadingjet_pt30_eta4p7=pt;
                     }
@@ -306,10 +339,63 @@ void GenAnalysis::SetGenVariables(){
                     }
                 }
             }// loop over gen jets
+            passedFiducialSelection = false;
 
-         }
+            int j1 = (GEN_goodJetsidx.size() > 0) ? GEN_goodJetsidx[0] : -1;
+            int j2 = (GEN_goodJetsidx.size() > 1) ? GEN_goodJetsidx[1] : -1;
+            int j3 = (GEN_goodJetsidx.size() > 2) ? GEN_goodJetsidx[2] : -1;
+            int j4 = (GEN_goodJetsidx.size() > 3) ? GEN_goodJetsidx[3] : -1;
 
-    }
+            b_jets.clear();
+            
+            for (int j : {j1, j2, j3, j4}) {
+                if (j >= 0 && GENjet_hadronFlavour[j] == 5) {
+                        b_jets.push_back(j);
+                }
+            }
+
+            if (b_jets.size() < 2) return;
+
+            int h1 = b_jets[0];
+            int h2 = b_jets[1];
+            GENjet_Hindex[0] = h1;
+            GENjet_Hindex[1] = h2;
+            GENgoodj1.SetPtEtaPhiM(GENjet_pt[h1], GENjet_eta[h1], GENjet_phi[h1], GENjet_mass[h1]);
+            GENpTj1 = GENgoodj1.Pt();
+            GENetaj1 = GENgoodj1.Eta();
+            GENphij1 = GENgoodj1.Phi();
+            GENmj1 = GENgoodj1.M();
+            GENgoodj2.SetPtEtaPhiM(GENjet_pt[h2], GENjet_eta[h2], GENjet_phi[h2], GENjet_mass[h2]);
+            GENpTj2 = GENgoodj2.Pt();
+            GENetaj2 = GENgoodj2.Eta();
+            GENphij2 = GENgoodj2.Phi();
+            GENmj2 = GENgoodj2.M();
+            GEN_H2Vec = GENgoodj1 + GENgoodj2 ;
+            GENmass2j = GEN_H2Vec.M();
+            passedFiducialSelection = true;
+            //std::cout << "[DEBUG] b_jets.size() = " << b_jets.size() << std::endl;
+            //std::cout << "[DEBUG] GEN_goodJetsidx = ";
+            //for (size_t i = 0; i < GEN_goodJetsidx.size(); ++i) {
+            //    std::cout << GEN_goodJetsidx[i] << " ";
+            //}
+            //std::cout << std::endl;
+
+            //std::cout << "[DEBUG] b_jets = ";
+            //for (size_t i = 0; i < b_jets.size(); ++i) {
+            //    std::cout << b_jets[i] << " ";
+            //}
+            //std::cout << std::endl;
+
+            //std::cout << "[DEBUG] h1 = " << h1
+            //    << ", h2 = " << h2
+            //    << ", total GEN jets = " << GENjet_pt.size()
+            //    << std::endl;
+
+            //std::cout << "[DEBUG] GENjet_Hindex[0] = " << GENjet_Hindex[0]
+            //    << ", GENjet_Hindex[1] = " << GENjet_Hindex[1]
+            //    << std::endl;
+        }    
+    }    
     return;
 }
 

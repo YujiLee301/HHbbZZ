@@ -315,7 +315,7 @@ class H4LTools {
         Z2nofsr.SetPtEtaPhiM(0,0,0,0);
         ZZsystem.SetPtEtaPhiM(0,0,0,0);
         ZZsystemnofsr.SetPtEtaPhiM(0,0,0,0);
-        nElectron = 0; nMuon = 0; nJet = 0; nFsrPhoton = 0; nGenPart = 0;
+        nElectron = 0; nMuon = 0; nJet = 0; nFsrPhoton = 0; nGenPart = 0; nGenJet = 0;
         nTightEle = 0; nTightMu = 0; nTightEleChgSum = 0; nTightMuChgSum = 0;
         Lepointer = 0; 
         
@@ -326,6 +326,7 @@ class H4LTools {
 
         pTj1 = -99;  etaj1 = -99;  phij1 = -99;  mj1 = -99; btagger1_DJ = -99; btagger1_PN = -99; btagger1_RPT = -99;
         pTj2 = -99;  etaj2 = -99;  phij2 = -99;  mj2 = -99; btagger2_DJ = -99; btagger2_PN = -99; btagger2_RPT = -99;
+
         njets_pt30_eta4p7 = 0; invjj = -99;
         RecoFourMuEvent=false; RecoFourEEvent=false; RecoTwoETwoMuEvent=false; RecoTwoMuTwoEEvent=false;
         flag4e=false; flag4mu=false; flag2e2mu=false;
@@ -373,7 +374,7 @@ class H4LTools {
       std::vector<float> GenPart_pt;
       
       
-      unsigned nElectron,nMuon,nJet,nGenPart,nFsrPhoton;
+      unsigned nElectron,nMuon,nJet,nGenPart,nFsrPhoton,nGenJet;
 
 
 

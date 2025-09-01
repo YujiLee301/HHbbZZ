@@ -62,6 +62,7 @@ class HZZAnalysisCppProducer(Module):
         self.passZZEvts = 0
         self.cfgFile = cfgFile
         self.worker.isFSR = isFSR
+        self.print_count = 0
         pass
     def beginJob(self):
         pass
@@ -162,6 +163,15 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("btagger2_PN", "F")
         self.out.branch("btagger2_RPT", "F")
         self.out.branch("invjj", "F")
+        self.out.branch("GENmass2j", "F")
+        self.out.branch("GENpTj1", "F")
+        self.out.branch("GENetaj1", "F")
+        self.out.branch("GENphij1", "F")
+        self.out.branch("GENmj1", "F")
+        self.out.branch("GENpTj2", "F")
+        self.out.branch("GENetaj2", "F")
+        self.out.branch("GENphij2", "F")
+        self.out.branch("GENmj2", "F")
         self.out.branch("EvtNum",  "I")
         self.out.branch("Weight",  "F")
         self.out.branch("pileupWeight",  "F")
@@ -176,6 +186,7 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("passedFiducialSelection",  "O")
         GENHlepNum = 4
         GENZNum = 2
+        GENHjetNum = 2
         self.out.branch("GENlep_MomId",  "I", lenVar = "nGenPart")
         self.out.branch("GENlep_MomMomId",  "I", lenVar = "nGenPart")
         self.out.branch("GENZ_MomId",  "I", lenVar = "nVECZ")
@@ -190,6 +201,13 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("Muon_Fsr_pt",  "F", lenVar = "nMuon_Fsr")
         self.out.branch("Muon_Fsr_eta",  "F", lenVar = "nMuon_Fsr")
         self.out.branch("Muon_Fsr_phi",  "F", lenVar = "nMuon_Fsr")
+        self.out.branch("goodJet_pt", "F", lenVar="ngoodJets")
+        self.out.branch("goodJet_eta", "F", lenVar="ngoodJets")
+        self.out.branch("goodJet_phi", "F", lenVar="ngoodJets")
+        self.out.branch("goodJet_mass", "F", lenVar="ngoodJets")
+        self.out.branch("goodJet_btagRPT", "F", lenVar="ngoodJets")
+        self.out.branch("GENjet_hadronFlavour",  "I", lenVar = "nGenJet")
+        self.out.branch("GENjet_Hindex",  "I", lenVar = "GENHjetNum")
 
         with open("SyncLepton2018GGH.txt", 'w') as f:
             f.write("Sync data list:"+"\n")
@@ -248,6 +266,7 @@ class HZZAnalysisCppProducer(Module):
         GENnjets_pt30_eta4p7 = -1
         nGENLeptons = 0
         nGenPart = 0
+        nGenJet = 0
         pTZ1 = -99
         etaZ1 = -99
         phiZ1 = -99
@@ -268,6 +287,15 @@ class HZZAnalysisCppProducer(Module):
         btagger2_PN = -99
         btagger2_RPT = -99
         invjj = -99
+        GENmass2j = -99
+        GENpTj1 = -99
+        GENetaj1 = -99
+        GENphij1 = -99
+        GENmj1 = -99
+        GENpTj2 = -99
+        GENetaj2 = -99
+        GENphij2 = -99
+        GENmj2 = -99
         passedTrig = PassTrig(event, self.cfgFile)
         if (passedTrig==True):
             self.passtrigEvts += 1
@@ -284,7 +312,7 @@ class HZZAnalysisCppProducer(Module):
             genparts = Collection(event, "GenPart")
             genjets = Collection(event, "GenJet")
             for xj in genjets:
-                self.genworker.SetGenJets(xj.pt,xj.eta,xj.phi,xj.mass)
+                self.genworker.SetGenJets(xj.pt,xj.eta,xj.phi,xj.mass,xj.hadronFlavour)
             for xg in genparts:
                 self.worker.SetGenParts(xg.pt)
                 self.genworker.SetGenParts(xg.pt,xg.eta,xg.phi,xg.mass,xg.pdgId,xg.status,xg.statusFlags,xg.genPartIdxMother)
@@ -315,6 +343,16 @@ class HZZAnalysisCppProducer(Module):
             GENrapidity4l = self.genworker.GENrapidity4l
             GENnjets_pt30_eta4p7 = self.genworker.GENnjets_pt30_eta4p7
             nGENLeptons = self.genworker.nGENLeptons
+            
+            GENmass2j = self.genworker.GENmass2j
+            GENpTj1 = self.genworker.GENpTj1
+            GENetaj1 = self.genworker.GENetaj1
+            GENphij1 = self.genworker.GENphij1
+            GENmj1 = self.genworker.GENmj1
+            GENpTj2 = self.genworker.GENpTj2
+            GENetaj2 = self.genworker.GENetaj2
+            GENphij2 = self.genworker.GENphij2
+            GENmj2 = self.genworker.GENmj2
         
         passedFiducialSelection = self.genworker.passedFiducialSelection
 
@@ -324,7 +362,6 @@ class HZZAnalysisCppProducer(Module):
         Muon_Fsr_pt_vec = self.worker.MuonFsrPt()
         Muon_Fsr_eta_vec = self.worker.MuonFsrEta()
         Muon_Fsr_phi_vec = self.worker.MuonFsrPhi()
-        
         Electron_Fsr_pt = []
         Electron_Fsr_eta = []
         Electron_Fsr_phi = []
@@ -342,12 +379,36 @@ class HZZAnalysisCppProducer(Module):
                 Muon_Fsr_pt.append(Muon_Fsr_pt_vec[i])
                 Muon_Fsr_eta.append(Muon_Fsr_eta_vec[i])
                 Muon_Fsr_phi.append(Muon_Fsr_phi_vec[i])
+                
+        goodJet_idxs = self.worker.jetidx
+        goodJet_pt = []
+        goodJet_eta = []
+        goodJet_phi = []
+        goodJet_mass = []
+        goodJet_btagRPT = []
+
+        for idx in goodJet_idxs:
+            goodJet_pt.append(jets[idx].pt)
+            goodJet_eta.append(jets[idx].eta)
+            goodJet_phi.append(jets[idx].phi)
+            goodJet_mass.append(jets[idx].mass)
+            goodJet_btagRPT.append(jets[idx].btagRobustParTAK4B)
+
+        #if self.print_count < 20:
+        #    print(f"[Python] Event {self.print_count} - Selected Jets (index | pt | eta | phi | btag):")
+        #    for idx in goodJet_idxs:
+        #        jet = jets[idx]
+        #        print(f"  idx = {idx}, pt = {jet.pt:.2f}, eta = {jet.eta:.2f}, phi = {jet.phi:.2f}, btag = {jet.btagRobustParTAK4B:.3f}")
+        #    self.print_count += 1
+    
         GENlep_id = []
         GENlep_Hindex = []
         GENZ_DaughtersId = []
         GENZ_MomId = []
         GENlep_MomId = []
         GENlep_MomMomId = []
+        GENjet_hadronFlavour = []
+        GENjet_Hindex = []
         if isMC:
             GENlep_id_vec = self.genworker.GENlep_id
             if len(GENlep_id_vec)>0:
@@ -374,6 +435,14 @@ class HZZAnalysisCppProducer(Module):
             if len(GENlep_MomMomId_vec)>0:
                 for i in range(len(GENlep_MomMomId_vec)):
                     GENlep_MomMomId.append(GENlep_MomMomId_vec[i])
+            GENjet_hadronFlavour_vec = self.genworker.GENjet_hadronFlavour
+            if len(GENjet_hadronFlavour_vec)>0:
+                for i in range(len(GENjet_hadronFlavour_vec)):
+                    GENjet_hadronFlavour.append(GENjet_hadronFlavour_vec[i])
+            GENjet_Hindex_vec = self.genworker.GENjet_Hindex
+            if len(GENjet_Hindex_vec)>0:
+                for i in range(len(GENjet_Hindex_vec)):
+                    GENjet_Hindex.append(GENjet_Hindex_vec[i])
 
         foundZZCandidate = self.worker.ZZSelection()
         passedFullSelection=foundZZCandidate
@@ -391,8 +460,9 @@ class HZZAnalysisCppProducer(Module):
                     lep_genindex.append(lep_genindex_vec[i])
         if (foundZZCandidate):
             self.passZZEvts += 1
-        if (foundZZCandidate |passedFiducialSelection ):
+        if (foundZZCandidate | passedFiducialSelection):
         #if (foundZZCandidate):
+        #if (passedFiducialSelection):
             EvtNum += 1
             keepIt = True
         if self.worker.RecoFourMuEvent: finalState = 1
@@ -544,6 +614,16 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("btagger2_PN",btagger2_PN)
         self.out.fillBranch("btagger2_RPT",btagger2_RPT)
         self.out.fillBranch("invjj",invjj)
+        self.out.fillBranch("GENmass2j",GENmass2j)
+        self.out.fillBranch("GENpTj1",GENpTj1)
+        self.out.fillBranch("GENetaj1",GENetaj1)
+        self.out.fillBranch("GENphij1",GENphij1)
+        self.out.fillBranch("GENmj1",GENmj1)
+        self.out.fillBranch("GENpTj2",GENpTj2)
+        self.out.fillBranch("GENetaj2",GENetaj2)
+        self.out.fillBranch("GENphij2",GENphij2)
+        self.out.fillBranch("GENmj2",GENmj2)
+        
         self.out.fillBranch("pileupWeight",pileupWeight)
         self.out.fillBranch("dataMCWeight_new",dataMCWeight_new)
         self.out.fillBranch("prefiringWeight",prefiringWeight)
@@ -566,6 +646,13 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("Muon_Fsr_pt",Muon_Fsr_pt)
         self.out.fillBranch("Muon_Fsr_eta",Muon_Fsr_eta)
         self.out.fillBranch("Muon_Fsr_phi",Muon_Fsr_phi)
+        self.out.fillBranch("goodJet_pt", goodJet_pt)
+        self.out.fillBranch("goodJet_eta", goodJet_eta)
+        self.out.fillBranch("goodJet_phi", goodJet_phi)
+        self.out.fillBranch("goodJet_mass", goodJet_mass)
+        self.out.fillBranch("goodJet_btagRPT", goodJet_btagRPT)
+        self.out.fillBranch("GENjet_hadronFlavour",GENjet_hadronFlavour)
+        self.out.fillBranch("GENjet_Hindex",GENjet_Hindex)
 
         """with open("SyncLepton2018GGH.txt", 'a') as f:
             if(foundZZCandidate):
