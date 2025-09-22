@@ -52,52 +52,143 @@ std::vector<unsigned int> H4LTools::goodElectrons2015_noIso_noBdt(std::vector<un
 
     return bestElectronindex;
 }
-std::vector<bool> H4LTools::passTight_BDT_Id(){
-    std::vector<bool> tightid;
-    float cutVal,mvaVal;
-    cutVal = 1000;
-    mvaVal = -1;
+//std::vector<bool> H4LTools::pass_Ele_Id(){
+//    std::vector<bool> tightid;
+//    float cutVal,mvaVal;
+//    cutVal = 1000;
+//    mvaVal = -1;
     //unsigned nE = (*nElectron).Get()[0];
-    for (unsigned int i=0; i<Electron_pt.size(); i++){
-        if(Electron_pt[i]<10){
-            if(fabs(Electron_eta[i])<0.8) cutVal = eleBDTWPLELP;
-            if((fabs(Electron_eta[i])>=0.8)&&(fabs(Electron_eta[i])<1.479)) cutVal = eleBDTWPMELP;
-            if(fabs(Electron_eta[i])>=1.479) cutVal = eleBDTWPHELP;
-        }
-        else{
-            if(fabs(Electron_eta[i])<0.8) cutVal = eleBDTWPLEHP;
-            if((fabs(Electron_eta[i])>=0.8)&&(fabs(Electron_eta[i])<1.479)) cutVal = eleBDTWPMEHP;
-            if(fabs(Electron_eta[i])>=1.479) cutVal = eleBDTWPHEHP;
-        }
+//    for (unsigned int i=0; i<Electron_pt.size(); i++){
+//        if(Electron_pt[i]<10){
+//            if(fabs(Electron_eta[i])<0.8) cutVal = eleBDTWPLELP;
+//            if((fabs(Electron_eta[i])>=0.8)&&(fabs(Electron_eta[i])<1.479)) cutVal = eleBDTWPMELP;
+//            if(fabs(Electron_eta[i])>=1.479) cutVal = eleBDTWPHELP;
+//        }
+//        else{
+//            if(fabs(Electron_eta[i])<0.8) cutVal = eleBDTWPLEHP;
+//            if((fabs(Electron_eta[i])>=0.8)&&(fabs(Electron_eta[i])<1.479)) cutVal = eleBDTWPMEHP;
+//            if(fabs(Electron_eta[i])>=1.479) cutVal = eleBDTWPHEHP;
+//        }
 
-        mvaVal = Electron_mvaFall17V2Iso[i];
-        if(mvaVal > cutVal){
-            tightid.push_back(true);
-        }
-        else{
-            tightid.push_back(false);
-        }
+//        mvaVal = Electron_mvaFall17V2Iso[i];
+//        if(mvaVal > cutVal){
+//            tightid.push_back(true);
+//        }
+//        else{
+//            tightid.push_back(false);
+//        }
     
+//    }
+//    return tightid;
+//}
+
+std::vector<bool> H4LTools::pass_Ele_Id(const std::string& era, const std::string& wp){
+    std::vector<bool> passid;
+    for (unsigned int i = 0; i < Electron_pt.size(); i++){
+
+        if(wp == "wp80") { //wp90 and wp80 for about 90 % and 80 % signal efficiency in each category
+            if(era == "Run2") passid.push_back(Electron_mvaFall17V2Iso_WP80[i]);
+            else if(era == "Run3") passid.push_back(Electron_mvaIso_WP80[i]);
+            else {
+                std::cerr << "[ERROR] Unknown era: " << era << std::endl;
+                passid.push_back(false);
+            }
+        }
+        else if(wp == "wp90") {
+            if(era == "Run2") passid.push_back(Electron_mvaFall17V2Iso_WP90[i]);
+            else if(era == "Run3") passid.push_back(Electron_mvaIso_WP90[i]);
+            else {
+                std::cerr << "[ERROR] Unknown era: " << era << std::endl;
+                passid.push_back(false);
+            }
+        }
+        else {
+            std::cerr << "[ERROR] Unknown WP: " << wp << std::endl;
+            passid.push_back(false);
+        }
     }
-    
-    return tightid;
-    
+    return passid;
 }
-std::vector<bool> H4LTools::passTight_Id(){
-    std::vector<bool> tightid;
+
+
+
+//std::vector<bool> H4LTools::pass_Mu_Id(){
+//    std::vector<bool> tightid;
     //unsigned nMu = (*nMuon).Get()[0];
-    for (unsigned int i=0; i<Muon_pt.size(); i++){
-        if (Muon_pt[i]<MuHighPtBound){
-            tightid.push_back(Muon_isPFcand[i]);
-        }
-        else{
-            tightid.push_back(Muon_isPFcand[i]||(((Muon_ptErr[i]/Muon_pt[i])<MuTightpTErrorcut)&&(fabs(Muon_dxy[i])<MuTightdxycut)&&(fabs(Muon_dz[i])<MuTightdzcut)&&(Muon_nTrackerLayers[i]>MuTightTrackerLayercut)));
-        }
+//    for (unsigned int i=0; i<Muon_pt.size(); i++){
+//        if (Muon_pt[i]<MuHighPtBound){
+//            tightid.push_back(Muon_isPFcand[i]);
+//        }
+//        else{
+//            tightid.push_back(Muon_isPFcand[i]||(((Muon_ptErr[i]/Muon_pt[i])<MuTightpTErrorcut)&&(fabs(Muon_dxy[i])<MuTightdxycut)&&(fabs(Muon_dz[i])<MuTightdzcut)&&(Muon_nTrackerLayers[i]>MuTightTrackerLayercut)));
+//        }
+//    }
+//    return tightid;
+//}
 
+std::vector<bool> H4LTools::pass_Mu_Id(const std::string& era, const std::string& method, const std::string& wp) {
+    std::vector<bool> passId;
+
+    for (unsigned int i = 0; i < Muon_pt.size(); i++) {
+
+        if (method == "PF Cut-Based") {
+            // PF Cut-Based selection (same for Run2 and Run3)
+            if (wp == "loose")      passId.push_back(Muon_looseId[i]);
+            else if (wp == "medium") passId.push_back(Muon_mediumId[i]);
+            else if (wp == "tight")  passId.push_back(Muon_tightId[i]);
+            else {
+                std::cerr << "[MuonID] Unknown WP for PF Cut-Based: " << wp << std::endl;
+                passId.push_back(false);
+            }
+        }
+        else if (method == "MVA-Based") {
+            if (era == "Run2") {
+                // Run2 NanoAOD MVA ID
+                if (Muon_pt[i] < 3.0) { 
+                    // soft muon, use Muon_mvaLowPtId
+                    if      (wp == "loose")  passId.push_back(Muon_mvaLowPtId[i] >= 1);
+                    else if (wp == "medium") passId.push_back(Muon_mvaLowPtId[i] >= 2);
+                    else if (wp == "tight")  passId.push_back(Muon_mvaLowPtId[i] >= 3);
+                    else {
+                        std::cerr << "[MuonID] Unknown WP for Run2 low-pT MVA: " << wp << std::endl;
+                        passId.push_back(false);
+                    }
+                } else {
+                    // normal muon, use Muon_mvaId
+                    if      (wp == "loose")  passId.push_back(Muon_mvaId[i] >= 1);
+                    else if (wp == "medium") passId.push_back(Muon_mvaId[i] >= 2);
+                    else if (wp == "tight")  passId.push_back(Muon_mvaId[i] >= 3);
+                    else if (wp == "vtight") passId.push_back(Muon_mvaId[i] >= 4);
+                    else if (wp == "vvtight") passId.push_back(Muon_mvaId[i] >= 5);
+                    else {
+                        std::cerr << "[MuonID] Unknown WP for Run2 MVA-Based: " << wp << std::endl;
+                        passId.push_back(false);
+                    }
+                }
+            }
+            else if (era == "Run3") {
+                // Run3 NanoAOD MVA ID
+                if      (wp == "wpMedium") passId.push_back(Muon_mvaMuID_WP[i] == 1);
+                else if (wp == "wpTight")  passId.push_back(Muon_mvaMuID_WP[i] == 2);
+                else {
+                    std::cerr << "[MuonID] Unknown WP for Run3 MVA-Based: " << wp << std::endl;
+                    passId.push_back(false);
+                }
+            }
+            else {
+                std::cerr << "[MuonID] Unknown era: " << era << std::endl;
+                passId.push_back(false);
+            }
+        }
+        else {
+            std::cerr << "[MuonID] Unknown Muon ID method: " << method << std::endl;
+            passId.push_back(false);
+        }
     }
 
-    return tightid;
+    return passId;
 }
+
 
 std::vector<unsigned int> H4LTools::goodFsrPhotons(){
     std::vector<unsigned int> goodFsrPhoton;
@@ -370,19 +461,19 @@ std::vector<float> H4LTools::MuonFsrPhi(){
 
 void H4LTools::LeptonSelection(){
     
-    looseEle = goodLooseElectrons2012();
-    looseMu = goodLooseMuons2012();
-    bestEle = goodElectrons2015_noIso_noBdt(looseEle);
-    bestMu = goodMuons2015_noIso_noPf(looseMu);
+    step1Ele = goodLooseElectrons2012();
+    step1Mu = goodLooseMuons2012();
+    bestEle = goodElectrons2015_noIso_noBdt(step1Ele);
+    bestMu = goodMuons2015_noIso_noPf(step1Mu);
     Electronindex = bestEle;
     Muonindex = bestMu;
-    AllEid = passTight_BDT_Id();
-    AllMuid = passTight_Id();
-    for (unsigned int iuj=0;iuj<looseEle.size();iuj++){
-        if(AllEid[looseEle[iuj]]) tighteleforjetidx.push_back(looseEle[iuj]);
+    AllEid = pass_Ele_Id("Run3","wp90");//wp90-loose, wp80-tight
+    AllMuid = pass_Mu_Id("Run3","PF Cut-Based","loose");
+    for (unsigned int iuj=0;iuj<step1Ele.size();iuj++){
+        if(AllEid[step1Ele[iuj]]) tighteleforjetidx.push_back(step1Ele[iuj]);
     }
-    for (unsigned int juj=0;juj<looseMu.size();juj++){
-        if(AllMuid[looseMu[juj]]) tightmuforjetidx.push_back(looseMu[juj]);
+    for (unsigned int juj=0;juj<step1Mu.size();juj++){
+        if(AllMuid[step1Mu[juj]]) tightmuforjetidx.push_back(step1Mu[juj]);
     }
     jetidx = SelectedJets(tighteleforjetidx,tightmuforjetidx);
     //static int printCount = 0;
@@ -432,7 +523,6 @@ void H4LTools::LeptonSelection(){
     
     //ElelistFsr = BatchFsrRecovery(Elelist); 
     //MulistFsr = BatchFsrRecovery(Mulist);
-    
     for(unsigned int ae=0; ae<Eid.size();ae++){
         float RelEleIsoNoFsr;
         RelEleIsoNoFsr = Eiso[ae];
@@ -454,7 +544,8 @@ void H4LTools::LeptonSelection(){
               }
           }*/
         }
-        if((Eid[ae]==true)&&(RelEleIsoNoFsr<0.35)){
+        //if((Eid[ae]==true)&&(RelEleIsoNoFsr<0.35)){
+        if(Eid[ae]==true){
             nTightEle++;
             TightEleindex.push_back(ae);
             nTightEleChgSum += Elechg[ae];
@@ -496,7 +587,6 @@ void H4LTools::LeptonSelection(){
             else lep_genindex.push_back(-1);
         }
     }
-    
     
 }
 bool H4LTools::findZCandidate(){
@@ -630,7 +720,6 @@ bool H4LTools::ZZSelection(){
     if(jetidx.size()<JetNcut){
         return foundZZCandidate;
     }
-    
     //Find ZZ candidate
     std::vector<int> Z1CanIndex;
     std::vector<int> Z2CanIndex;
@@ -804,7 +893,7 @@ bool H4LTools::ZZSelection(){
         if (flag2e2mu) cutm4l2e2mu++;
         if (flag4e) cutm4l4e++;
         if (flag4mu) cutm4l4mu++;
-    }
+    }//It doesn’t define PassZZSelection; it just selects events within it that fall in the Higgs mass window.
 
     unsigned int jet1index, jet2index;
     jet1index = 99;

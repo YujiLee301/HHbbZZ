@@ -151,7 +151,7 @@ void GenAnalysis::SetGenVariables(){
     if (GENlep_pt.size()>=4) {
 
         unsigned int L1_nocuts=99; unsigned int L2_nocuts=99; unsigned int L3_nocuts=99; unsigned int L4_nocuts=99;
-        bool passedFiducialSelectionNoCuts = mZ1_mZ2(L1_nocuts, L2_nocuts, L3_nocuts, L4_nocuts, false);
+        bool passedFiducialSelectionNoCuts = mZ1_mZ2(L1_nocuts, L2_nocuts, L3_nocuts, L4_nocuts, false);//makecuts=false
         if (passedFiducialSelectionNoCuts) {
             TLorentzVector Z1_1, Z1_2, Z2_1, Z2_2;
             Z1_1.SetPtEtaPhiM(GENlep_pt[L1_nocuts],GENlep_eta[L1_nocuts],GENlep_phi[L1_nocuts],GENlep_mass[L1_nocuts]);
@@ -200,7 +200,7 @@ void GenAnalysis::SetGenVariables(){
         GENmassZ1 = -1.0; GENmassZ2 = -1.0; GENpT4l = -1.0; GENeta4l = 999.; GENrapidity4l = 999.; GENphi4l = 999.;
         GENpT4lj = -1.0; GENpT4ljj=-1.0; GENmass4lj = -1.0; GENmass4ljj=-1.0;
 
-        passedFiducialSelection = mZ1_mZ2(L1, L2, L3, L4, true);
+        passedFiducialSelection = mZ1_mZ2(L1, L2, L3, L4, true);//makecuts=true
         if(flag2e2mu){            
             if(flagpassZ1){
                 nGEN2e2mupassZ1++;
@@ -372,7 +372,7 @@ void GenAnalysis::SetGenVariables(){
             GENmj2 = GENgoodj2.M();
             GEN_H2Vec = GENgoodj1 + GENgoodj2 ;
             GENmass2j = GEN_H2Vec.M();
-            passedFiducialSelection = true;
+            passedFiducialSelection = true;            
             //std::cout << "[DEBUG] b_jets.size() = " << b_jets.size() << std::endl;
             //std::cout << "[DEBUG] GEN_goodJetsidx = ";
             //for (size_t i = 0; i < GEN_goodJetsidx.size(); ++i) {
@@ -394,8 +394,8 @@ void GenAnalysis::SetGenVariables(){
             //std::cout << "[DEBUG] GENjet_Hindex[0] = " << GENjet_Hindex[0]
             //    << ", GENjet_Hindex[1] = " << GENjet_Hindex[1]
             //    << std::endl;
-        }    
-    }    
+        }
+    }
     return;
 }
 
@@ -427,7 +427,7 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
 
                 if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
                 if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
-                if ( GENlep_RelIso[j]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
+                if ( GENlep_RelIso[j]>((abs(GENlep_id[j])==11)?genIsoCutEl:genIsoCutMu)) continue;
             }
 
             TLorentzVector mll = li+lj;
@@ -470,7 +470,7 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
 
                 if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
                 if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
-                if ( GENlep_RelIso[j]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
+                if ( GENlep_RelIso[j]>((abs(GENlep_id[j])==11)?genIsoCutEl:genIsoCutMu)) continue;
             }
 
             if ( (li.Pt()+lj.Pt())>=pTL34 ) {
