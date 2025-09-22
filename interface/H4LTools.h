@@ -67,8 +67,9 @@ class H4LTools {
         MZcutdown = MZcutdown_;
         MZcutup = MZcutup_;
       }
-      void SetElectrons(float Electron_pt_, float Electron_eta_, float Electron_phi_, float Electron_mass_, float Electron_dxy_,float Electron_dz_,
-                        float Electron_sip3d_, float Electron_mvaFall17V2Iso_, int Electron_pdgId_, float Electron_pfRelIso03_all_){
+      void SetElectrons(float Electron_pt_, float Electron_eta_, float Electron_phi_, float Electron_mass_, float Electron_dxy_, float Electron_dz_, float Electron_sip3d_, 
+                        bool Electron_mvaFall17V2Iso_WP80_, bool Electron_mvaFall17V2Iso_WP90_, bool Electron_mvaFall17V2Iso_WPL_,
+                        bool Electron_mvaIso_WP80_, bool Electron_mvaIso_WP90_, int Electron_pdgId_, float Electron_pfRelIso03_all_){
         Electron_pt.push_back(Electron_pt_); 
         Electron_phi.push_back(Electron_phi_);
         Electron_eta.push_back(Electron_eta_);
@@ -76,7 +77,11 @@ class H4LTools {
         Electron_dxy.push_back(Electron_dxy_);
         Electron_dz.push_back(Electron_dz_);
         Electron_sip3d.push_back(Electron_sip3d_);
-        Electron_mvaFall17V2Iso.push_back(Electron_mvaFall17V2Iso_);
+        Electron_mvaFall17V2Iso_WP80.push_back(Electron_mvaFall17V2Iso_WP80_);
+        Electron_mvaFall17V2Iso_WP90.push_back(Electron_mvaFall17V2Iso_WP90_);
+        Electron_mvaFall17V2Iso_WPL.push_back(Electron_mvaFall17V2Iso_WPL_);
+        Electron_mvaIso_WP80.push_back(Electron_mvaIso_WP80_);
+        Electron_mvaIso_WP90.push_back(Electron_mvaIso_WP90_);
         Electron_pdgId.push_back(Electron_pdgId_);
         Electron_pfRelIso03_all.push_back(Electron_pfRelIso03_all_);
       }
@@ -98,6 +103,8 @@ class H4LTools {
       
       void SetMuons(float Muon_pt_, float Muon_eta_, float Muon_phi_, float Muon_mass_, bool Muon_isGlobal_, bool Muon_isTracker_,
                         float Muon_dxy_, float Muon_dz_,float Muon_sip3d_, float Muon_ptErr_,
+                        bool Muon_looseId_, bool Muon_mediumId_, bool Muon_tightId_, 
+                        unsigned char Muon_mvaLowPtId_, unsigned char Muon_mvaId_, unsigned char Muon_mvaMuID_WP_,
                         int Muon_nTrackerLayers_, bool Muon_isPFcand_, int Muon_pdgId_,int Muon_charge_, float Muon_pfRelIso03_all_
                         ){
         Muon_pt.push_back(Muon_pt_); 
@@ -115,7 +122,12 @@ class H4LTools {
         Muon_pdgId.push_back(Muon_pdgId_);
         Muon_charge.push_back(Muon_charge_);
         Muon_pfRelIso03_all.push_back(Muon_pfRelIso03_all_);
-        
+        Muon_looseId.push_back(Muon_looseId_);
+        Muon_mediumId.push_back(Muon_mediumId_);
+        Muon_tightId.push_back(Muon_tightId_);
+        Muon_mvaLowPtId.push_back(Muon_mvaLowPtId_);
+        Muon_mvaId.push_back(Muon_mvaId_);
+        Muon_mvaMuID_WP.push_back(Muon_mvaMuID_WP_); 
       }
       void SetMuonsGen(int Muon_genPartIdx_){
         Muon_genPartIdx.push_back(Muon_genPartIdx_);
@@ -185,8 +197,8 @@ class H4LTools {
       std::vector<unsigned int> goodLooseMuons2012();
       std::vector<unsigned int> goodMuons2015_noIso_noPf(std::vector<unsigned int> Muonindex);
       std::vector<unsigned int> goodElectrons2015_noIso_noBdt(std::vector<unsigned int> Electronindex);
-      std::vector<bool> passTight_BDT_Id();
-      std::vector<bool> passTight_Id();
+      std::vector<bool> pass_Ele_Id(const std::string& era, const std::string& wp);
+      std::vector<bool> pass_Mu_Id(const std::string& era, const std::string& method, const std::string& wp);
       std::vector<unsigned int> goodFsrPhotons();
       unsigned doFsrRecovery(TLorentzVector Lep);
       unsigned doFsrRecovery_Run3(std::vector<unsigned int> goodfsridx, unsigned lepidx, int lepflavor);//lepflavor 11 or 13
@@ -241,7 +253,7 @@ class H4LTools {
       bool flag2e2mu;
 
       void LeptonSelection();
-      std::vector<unsigned int> looseEle,looseMu,bestEle,bestMu, tighteleforjetidx, tightmuforjetidx;
+      std::vector<unsigned int> step1Ele,step1Mu,bestEle,bestMu, tighteleforjetidx, tightmuforjetidx;
       std::vector<unsigned int> Electronindex;
       std::vector<unsigned int> Muonindex;
       std::vector<bool> AllEid;
@@ -269,8 +281,8 @@ class H4LTools {
       std::vector<int> TightEleindex;
       std::vector<int> TightMuindex;
       void Initialize(){
-        looseEle.clear();
-        looseMu.clear();
+        step1Ele.clear();
+        step1Mu.clear();
         bestEle.clear();
         bestMu.clear();
         tighteleforjetidx.clear();
@@ -284,10 +296,12 @@ class H4LTools {
         ElelistFsr.clear();
         MulistFsr.clear();
         Electron_pt.clear();Electron_phi.clear();Electron_eta.clear();Electron_mass.clear();Electron_dxy.clear();Electron_dz.clear();Electron_sip3d.clear();
-        Electron_mvaFall17V2Iso.clear();Electron_pdgId.clear();Electron_genPartIdx.clear();Electron_pfRelIso03_all.clear();
+        Electron_mvaFall17V2Iso_WP80.clear();Electron_mvaFall17V2Iso_WP90.clear();Electron_mvaFall17V2Iso_WPL.clear();
+        Electron_mvaIso_WP80.clear();Electron_mvaIso_WP90.clear();Electron_pdgId.clear();Electron_genPartIdx.clear();Electron_pfRelIso03_all.clear();
         Muon_pt.clear();Muon_phi.clear();Muon_eta.clear();Muon_mass.clear();Muon_dxy.clear();Muon_dz.clear();Muon_sip3d.clear();Muon_ptErr.clear();Muon_pfRelIso03_all.clear();
         Muon_nTrackerLayers.clear();Muon_genPartIdx.clear();Muon_pdgId.clear();Muon_charge.clear();
         Muon_isTracker.clear();Muon_isGlobal.clear();Muon_isPFcand.clear();
+        Muon_looseId.clear();Muon_mediumId.clear();Muon_tightId.clear();Muon_mvaLowPtId.clear();Muon_mvaId.clear();Muon_mvaMuID_WP.clear();
         Jet_pt.clear();Jet_phi.clear();Jet_eta.clear();Jet_mass.clear();Jet_btagDeepC.clear();Jet_btagDeepFlavB.clear();Jet_btagPNetB.clear();Jet_btagRobustParTAK4B.clear();
         Jet_jetId.clear();Jet_puId.clear(); Zlep1lepindex.clear();Zlep2lepindex.clear();
         FsrPhoton_dROverEt2.clear();FsrPhoton_phi.clear();FsrPhoton_eta.clear();FsrPhoton_pt.clear();FsrPhoton_relIso03.clear(); FsrPhoton_electronIdx.clear(); FsrPhoton_muonIdx.clear();
@@ -305,7 +319,7 @@ class H4LTools {
         Zlep1ptNoFsr.clear(); Zlep1etaNoFsr.clear(); Zlep1phiNoFsr.clear(); Zlep1massNoFsr.clear();
         Zlep2ptNoFsr.clear(); Zlep2etaNoFsr.clear(); Zlep2phiNoFsr.clear(); Zlep2massNoFsr.clear();
         jetidx.clear(); lep_genindex.clear(); TightElelep_index.clear();TightMulep_index.clear();
-        looseEle.clear(); looseMu.clear(); bestEle.clear(); bestMu.clear();  tighteleforjetidx.clear();  tightmuforjetidx.clear(); 
+        step1Ele.clear(); step1Mu.clear(); bestEle.clear(); bestMu.clear();  tighteleforjetidx.clear();  tightmuforjetidx.clear(); 
         Electronindex.clear();  Muonindex.clear(); AllEid.clear(); AllMuid.clear(); Elelist.clear(); Mulist.clear(); ElelistFsr.clear(); Mulist.clear(); 
         Elechg.clear(); Muchg.clear(); Muiso.clear();Eiso.clear(); Eid.clear(); muid.clear(); TightEleindex.clear(); TightMuindex.clear();
         for (int i=0; i<4; i++) {lep_Hindex[i]=-1;}
@@ -351,7 +365,7 @@ class H4LTools {
       float getDL1Constant(float ZZMass);
       float getDL1ZgsConstant(float ZZMass);
 
-      int cut4e, cut4mu, cut2e2mu, cutZZ4e, cutZZ4mu, cutZZ2e2mu, cutm4l4e, cutm4l4mu, cutm4l2e2mu, cutghost2e2mu, cutQCD2e2mu, cutLepPt2e2mu, cutghost4e, cutQCD4e, cutLepPt4e, cutghost4mu, cutQCD4mu, cutLepPt4mu;
+      int cut4e, cut4mu, cut2e2mu, cutZZ4e, cutZZ4mu, cutZZ2e2mu, cutm4l4e, cutm4l4mu, cutm4l2e2mu, cutghost2e2mu, cutQCD2e2mu, cutLepPt2e2mu, cutghost4e, cutQCD4e, cutLepPt4e, cutghost4mu, cutQCD4mu, cutLepPt4mu, totalEventsWithTightEle, totalEventsWithTightMu;
       float pTL1, etaL1, phiL1, massL1, pTL2, etaL2, phiL2, massL2, pTL3, etaL3, phiL3, massL3, pTL4, etaL4, phiL4, massL4;
       float pTj1, etaj1, phij1, mj1, pTj2, etaj2, phij2, mj2;
 
@@ -359,7 +373,9 @@ class H4LTools {
       
     private:
       std::vector<float> Electron_pt,Electron_phi,Electron_eta,Electron_mass,Electron_dxy,Electron_dz,Electron_sip3d;
-      std::vector<float> Electron_mvaFall17V2Iso,Electron_pfRelIso03_all;
+      std::vector<float> Electron_pfRelIso03_all;
+      std::vector<bool> Electron_mvaFall17V2Iso_WP80,Electron_mvaFall17V2Iso_WP90,Electron_mvaFall17V2Iso_WPL;
+      std::vector<bool> Electron_mvaIso_WP80,Electron_mvaIso_WP90;
       std::vector<int> Electron_pdgId,Electron_genPartIdx;
 
       std::vector<float> Jet_pt,Jet_phi,Jet_eta,Jet_mass,Jet_btagDeepC,Jet_btagDeepFlavB,Jet_btagPNetB,Jet_btagRobustParTAK4B;
@@ -368,6 +384,8 @@ class H4LTools {
       std::vector<float> Muon_pt,Muon_phi,Muon_eta,Muon_mass,Muon_dxy,Muon_dz,Muon_sip3d,Muon_ptErr,Muon_pfRelIso03_all;
       std::vector<int> Muon_nTrackerLayers,Muon_genPartIdx,Muon_pdgId,Muon_charge;
       std::vector<bool> Muon_isTracker,Muon_isGlobal,Muon_isPFcand;
+      std::vector<bool> Muon_looseId,Muon_mediumId,Muon_tightId;
+      std::vector<unsigned char> Muon_mvaLowPtId,Muon_mvaId,Muon_mvaMuID_WP;
 
       std::vector<float> FsrPhoton_dROverEt2,FsrPhoton_phi,FsrPhoton_pt,FsrPhoton_relIso03,FsrPhoton_eta,FsrPhoton_muonIdx,FsrPhoton_electronIdx;
       
@@ -420,6 +438,8 @@ H4LTools::H4LTools(int year, bool isMC_){
   cutm4l2e2mu = 0;
   cutm4l4e = 0;
   cutm4l4mu = 0;
+  totalEventsWithTightEle = 0;
+  totalEventsWithTightMu  = 0;
 
   
 }
