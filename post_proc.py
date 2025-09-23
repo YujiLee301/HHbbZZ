@@ -75,7 +75,7 @@ def main():
     first_file = testfilelist[0]
     isMC = "/data/" not in first_file
 
-    print(first_file, "\n", isMC)
+    print(first_file, "\n isMC = ", isMC)
 
     if "Summer22" in first_file or "Run2022" in first_file:
         """Summer22 and Run2022 for identification of 2022 MC and data respectiverly

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 
