@@ -365,7 +365,7 @@ class H4LTools {
       float getDL1Constant(float ZZMass);
       float getDL1ZgsConstant(float ZZMass);
 
-      int cut4e, cut4mu, cut2e2mu, cutZZ4e, cutZZ4mu, cutZZ2e2mu, cutm4l4e, cutm4l4mu, cutm4l2e2mu, cutghost2e2mu, cutQCD2e2mu, cutLepPt2e2mu, cutghost4e, cutQCD4e, cutLepPt4e, cutghost4mu, cutQCD4mu, cutLepPt4mu, totalEventsWithTightEle, totalEventsWithTightMu;
+      int cut4e, cut4mu, cut2e2mu, cutZZ4e, cutZZ4mu, cutZZ2e2mu, cutm4l4e, cutm4l4mu, cutm4l2e2mu, cutghost2e2mu, cutQCD2e2mu, cutLepPt2e2mu, cutghost4e, cutQCD4e, cutLepPt4e, cutghost4mu, cutQCD4mu, cutLepPt4mu;
       float pTL1, etaL1, phiL1, massL1, pTL2, etaL2, phiL2, massL2, pTL3, etaL3, phiL3, massL3, pTL4, etaL4, phiL4, massL4;
       float pTj1, etaj1, phij1, mj1, pTj2, etaj2, phij2, mj2;
 
@@ -438,8 +438,6 @@ H4LTools::H4LTools(int year, bool isMC_){
   cutm4l2e2mu = 0;
   cutm4l4e = 0;
   cutm4l4mu = 0;
-  totalEventsWithTightEle = 0;
-  totalEventsWithTightMu  = 0;
 
   
 }
