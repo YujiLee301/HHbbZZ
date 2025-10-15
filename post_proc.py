@@ -75,7 +75,7 @@ def main():
     first_file = testfilelist[0]
     isMC = "/data/" not in first_file
 
-    print(first_file, "\n", isMC)
+    print(first_file, "\n isMC = ", isMC)
 
     if "Summer22" in first_file or "Run2022" in first_file:
         """Summer22 and Run2022 for identification of 2022 MC and data respectiverly
@@ -114,7 +114,7 @@ def main():
         modulesToRun.append(eleSF)
         
         # --- Muon SF ---
-        if "pre_EE" in data_tag:
+        if "post_EE" not in data_tag:
             muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22/muon_Z.json.gz")
         else:
             muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22EE/muon_Z.json.gz")
@@ -182,7 +182,7 @@ def main():
         modulesToRun.append(eleSF)
         
         # --- Muon SF ---
-        if "pre_BPix" in data_tag:
+        if "post_BPix" not in data_tag:
             muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23/muon_Z.json.gz")
         else:
             muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23BPix/muon_Z.json.gz")
@@ -199,7 +199,7 @@ def main():
         
         # --- Electron scale/resolution
         EtDependent = True
-        if "pre_BPix" in data_tag:
+        if "post_BPix" not in data_tag:
             json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23/electronSS_EtDependent.json.gz"
             scaleKey = "EGMScale_Compound_Ele_2023preBPIX"
             smearKey = "EGMSmearAndSyst_ElePTsplit_2023preBPIX"
@@ -323,7 +323,7 @@ def main():
         if year == 2016: modulesToRun.extend([puAutoWeight_2016()])
 
         if year == 2022 :
-            if "pre_EE" in data_tag :
+            if "post_EE" not in data_tag :
                 json = "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/puWeights/puWeights_2022_Summer22.json.gz" % os.environ['CMSSW_BASE']
                 key = "Collisions2022_355100_357900_eraBCD_GoldenJson"
             else :

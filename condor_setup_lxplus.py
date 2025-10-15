@@ -59,7 +59,7 @@ def main(args):
     os.system('cp ' + CMSSWRel+".tgz" + ' '+storeDir+'/' + CMSSWRel+".tgz")
 
     post_proc_to_run = "post_proc.py"
-    command = "python "+post_proc_to_run
+    command = "python3 "+post_proc_to_run
 
     Transfer_Input_Files = ("keep_and_drop.txt")     # FIXME: Generalise this.
     # Transfer_Input_Files = ("Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt, " +
