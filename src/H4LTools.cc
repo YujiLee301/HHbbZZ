@@ -144,7 +144,7 @@ std::vector<bool> H4LTools::pass_Mu_Id(const std::string& era, const std::string
         else if (method == "MVA-Based") {
             if (era == "Run2") {
                 // Run2 NanoAOD MVA ID
-                if (Muon_pt[i] < 3.0) { 
+                if (Muon_pt[i] < 5.0) { 
                     // soft muon, use Muon_mvaLowPtId
                     if      (wp == "loose")  passId.push_back(Muon_mvaLowPtId[i] >= 1);
                     else if (wp == "medium") passId.push_back(Muon_mvaLowPtId[i] >= 2);
@@ -166,29 +166,31 @@ std::vector<bool> H4LTools::pass_Mu_Id(const std::string& era, const std::string
                     }
                 }
             }
+
             else if (era == "Run3") {
-                // Run3 NanoAOD MVA ID
-                if      (wp == "wpMedium") passId.push_back(Muon_mvaMuID_WP[i] == 1);
-                else if (wp == "wpTight")  passId.push_back(Muon_mvaMuID_WP[i] == 2);
+            // Cut-based + low-pT MVA + loose SIP cut 
+
+                bool passSIP = fabs(Muon_sip3d[i]) < 8; // 3D impact parameter significance wrt first PV
+
+                bool passCutBased = false;
+                if      (wp == "loose")  passCutBased = Muon_looseId[i];
+                else if (wp == "medium") passCutBased = Muon_mediumId[i];
+                else if (wp == "tight")  passCutBased = Muon_tightId[i];
                 else {
-                    std::cerr << "[MuonID] Unknown WP for Run3 MVA-Based: " << wp << std::endl;
+                    std::cerr << "[MuonID] Unknown WP for Run3 Cut-Based: " << wp << std::endl;
                     passId.push_back(false);
+                    continue;
                 }
+
+                bool passLowPtMVA = (Muon_mvaLowPt[i] > -0.6);
+
+                passId.push_back(passCutBased && passLowPtMVA && passSIP);
             }
-            else {
-                std::cerr << "[MuonID] Unknown era: " << era << std::endl;
-                passId.push_back(false);
-            }
-        }
-        else {
-            std::cerr << "[MuonID] Unknown Muon ID method: " << method << std::endl;
-            passId.push_back(false);
         }
     }
 
     return passId;
 }
-
 
 std::vector<unsigned int> H4LTools::goodFsrPhotons(){
     std::vector<unsigned int> goodFsrPhoton;
@@ -468,7 +470,7 @@ void H4LTools::LeptonSelection(){
     Electronindex = bestEle;
     Muonindex = bestMu;
     AllEid = pass_Ele_Id("Run3","wp90");//wp90-loose, wp80-tight
-    AllMuid = pass_Mu_Id("Run3","PF Cut-Based","loose");
+    AllMuid = pass_Mu_Id("Run3","MVA-Based","loose");
     for (unsigned int iuj=0;iuj<step1Ele.size();iuj++){
         if(AllEid[step1Ele[iuj]]) tighteleforjetidx.push_back(step1Ele[iuj]);
     }

@@ -104,7 +104,7 @@ class H4LTools {
       void SetMuons(float Muon_pt_, float Muon_eta_, float Muon_phi_, float Muon_mass_, bool Muon_isGlobal_, bool Muon_isTracker_,
                         float Muon_dxy_, float Muon_dz_,float Muon_sip3d_, float Muon_ptErr_,
                         bool Muon_looseId_, bool Muon_mediumId_, bool Muon_tightId_, 
-                        unsigned char Muon_mvaLowPtId_, unsigned char Muon_mvaId_, unsigned char Muon_mvaMuID_WP_,
+                        unsigned char Muon_mvaLowPtId_, unsigned char Muon_mvaId_, unsigned char Muon_mvaLowPt_,
                         int Muon_nTrackerLayers_, bool Muon_isPFcand_, int Muon_pdgId_,int Muon_charge_, float Muon_pfRelIso03_all_
                         ){
         Muon_pt.push_back(Muon_pt_); 
@@ -127,7 +127,7 @@ class H4LTools {
         Muon_tightId.push_back(Muon_tightId_);
         Muon_mvaLowPtId.push_back(Muon_mvaLowPtId_);
         Muon_mvaId.push_back(Muon_mvaId_);
-        Muon_mvaMuID_WP.push_back(Muon_mvaMuID_WP_); 
+        Muon_mvaLowPt.push_back(Muon_mvaLowPt_);
       }
       void SetMuonsGen(int Muon_genPartIdx_){
         Muon_genPartIdx.push_back(Muon_genPartIdx_);
@@ -301,7 +301,7 @@ class H4LTools {
         Muon_pt.clear();Muon_phi.clear();Muon_eta.clear();Muon_mass.clear();Muon_dxy.clear();Muon_dz.clear();Muon_sip3d.clear();Muon_ptErr.clear();Muon_pfRelIso03_all.clear();
         Muon_nTrackerLayers.clear();Muon_genPartIdx.clear();Muon_pdgId.clear();Muon_charge.clear();
         Muon_isTracker.clear();Muon_isGlobal.clear();Muon_isPFcand.clear();
-        Muon_looseId.clear();Muon_mediumId.clear();Muon_tightId.clear();Muon_mvaLowPtId.clear();Muon_mvaId.clear();Muon_mvaMuID_WP.clear();
+        Muon_looseId.clear();Muon_mediumId.clear();Muon_tightId.clear();Muon_mvaLowPtId.clear();Muon_mvaId.clear();Muon_mvaLowPt.clear();
         Jet_pt.clear();Jet_phi.clear();Jet_eta.clear();Jet_mass.clear();Jet_btagDeepC.clear();Jet_btagDeepFlavB.clear();Jet_btagPNetB.clear();Jet_btagRobustParTAK4B.clear();
         Jet_jetId.clear();Jet_puId.clear(); Zlep1lepindex.clear();Zlep2lepindex.clear();
         FsrPhoton_dROverEt2.clear();FsrPhoton_phi.clear();FsrPhoton_eta.clear();FsrPhoton_pt.clear();FsrPhoton_relIso03.clear(); FsrPhoton_electronIdx.clear(); FsrPhoton_muonIdx.clear();
@@ -385,7 +385,7 @@ class H4LTools {
       std::vector<int> Muon_nTrackerLayers,Muon_genPartIdx,Muon_pdgId,Muon_charge;
       std::vector<bool> Muon_isTracker,Muon_isGlobal,Muon_isPFcand;
       std::vector<bool> Muon_looseId,Muon_mediumId,Muon_tightId;
-      std::vector<unsigned char> Muon_mvaLowPtId,Muon_mvaId,Muon_mvaMuID_WP;
+      std::vector<unsigned char> Muon_mvaLowPtId,Muon_mvaId,Muon_mvaLowPt;
 
       std::vector<float> FsrPhoton_dROverEt2,FsrPhoton_phi,FsrPhoton_pt,FsrPhoton_relIso03,FsrPhoton_eta,FsrPhoton_muonIdx,FsrPhoton_electronIdx;
       

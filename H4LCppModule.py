@@ -343,7 +343,7 @@ class HZZAnalysisCppProducer(Module):
             hasCutBased = "Muon_looseId" in branches
             hasLowPtMVA = "Muon_mvaLowPtId" in branches #run2
             hasMVA_Run2 = "Muon_mvaId" in branches #run2
-            hasMVA_Run3 = "Muon_mvaMuID_WP" in branches #run3
+            hasMVA_Run3 = "Muon_mvaLowPt" in branches #run3
             
             looseId  = xm.looseId  if hasCutBased else False
             mediumId = xm.mediumId if hasCutBased else False
@@ -566,7 +566,7 @@ class HZZAnalysisCppProducer(Module):
         if self.worker.flag4e:
             mass4e = mass4l
         if self.worker.flag2e2mu:
-            mass4e = mass4l
+            mass2e2mu = mass4l
         if self.worker.flag4mu:
             mass4mu = mass4l
         if (self.worker.isFSR==False & passedFullSelection):
