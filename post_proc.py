@@ -81,17 +81,22 @@ def main():
         """Summer22 and Run2022 for identification of 2022 MC and data respectiverly
         """
         year = 2022
-        if "22EE" in first_file : data_tag = "post_EE"
+        if "22EE" in first_file : 
+            data_tag = "post_EE"
+        else :
+            data_tag = "pre_EE"
         cfgFile = "Input_2022.yml"
         jsonFileName = "golden_Json/Cert_Collisions2022_355100_362760_Golden.json"
         sfFileName = "DeepCSV_102XSF_V2.csv" # FIXME: Update for year 2022
         # json here: https://gitlab.cern.ch/cms-muonPOG/muonscarekit, from ref: https://muon-wiki.docs.cern.ch/code/ptcorr/
         
         # --- Electron SF ---
-        json_file = "2022_Summer22EE/electron.json.gz"
-        era = "2022Re-recoE+PromptFG"  
-        json_sf = f"{os.environ['CMSSW_BASE']}/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/ElectronScale/{json_file}"
-        eleSF = electronSF_natlib(json_sf)
+        if "pre_EE" in data_tag:
+            eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22/electron.json.gz")
+            era = "2022Re-recoBCD"
+        else:
+            eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electron.json.gz")
+            era = "2022Re-recoE+PromptFG"
         set_name = "Electron-ID-SF"
         # --- Reco SF ---
         def reco_wp(pt):
@@ -117,53 +122,46 @@ def main():
         muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst", "MuonSFsyst")
         modulesToRun.append(muSF)
         
-        # --- Muon scale/resolution
-        if "post_EE" not in data_tag :
-            modulesToRun.append(muonScaleRes_natlib("%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/MuonScale/%s" % (os.environ['CMSSW_BASE'], 
-                                "2022_Summer22.json"), is_mc=isMC, overwritePt=overwritePt, minPt=3.))
-        else :
-            modulesToRun.append(muonScaleRes_natlib("%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/MuonScale/%s" % (os.environ['CMSSW_BASE'], 
-                                "2022_Summer22EE.json"), is_mc=isMC, overwritePt=overwritePt, minPt=3.))
-            
-        # --- Electron scale/resolution
-        EtDependent = True
-        if "post_EE" not in data_tag:
-            json_file = "electronSS_EtDependent.json.gz"
-            modulesToRun.append(
-                eleScaleRes_natlib(
-                    "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/ElectronScale/2022_Summer22/%s" 
-                    % (os.environ['CMSSW_BASE'], json_file),
-                    "EGMScale_Compound_Ele_2022preEE",
-                    "EGMSmearAndSyst_ElePTsplit_2022preEE",
-                    overwritePt
-                )
-            )
+        # --- Muon scale/resolution ---
+        if "pre_EE" in data_tag:
+            muonScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22/muon_scalesmearing.json.gz"
         else:
-            json_file = "electronSS_EtDependent.json.gz"
-            modulesToRun.append(
-                eleScaleRes_natlib(
-                    "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/ElectronScale/2022_Summer22EE/%s" 
-                    % (os.environ['CMSSW_BASE'], json_file),
-                    "EGMScale_Compound_Ele_2022postEE",
-                    "EGMSmearAndSyst_ElePTsplit_2022postEE",
-                    overwritePt
-                )
-            )
+            muonScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22EE/muon_scalesmearing.json.gz"
+
+        modulesToRun.append(muonScaleRes_natlib(muonScale_json, is_mc = isMC, overwritePt = overwritePt, minPt=3.))  
+            
+        # --- Electron scale/resolution ---
+        EtDependent = True
+        if "pre_EE" in data_tag:
+            eleScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22/electronSS_EtDependent.json.gz"
+            scaleKey = "EGMScale_Compound_Ele_2022preEE"                
+            smearKey = "EGMSmearAndSyst_ElePTsplit_2022preEE"
+        else:
+            eleScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS_EtDependent.json.gz"
+            scaleKey = "EGMScale_Compound_Ele_2022postEE"
+            smearKey = "EGMSmearAndSyst_ElePTsplit_2022postEE"
+
+        modulesToRun.append(eleScaleRes_natlib(eleScale_json, scaleKey, smearKey, overwritePt))
 
     elif "Summer23" in first_file or "Run2023" in first_file:
         """Summer23 and Run2023 for identification of 2022 M3 and data respectiverly
         """
         year = 2023
-        if "23BPix" in first_file : data_tag = "post_BPix"
+        if "23BPix" in first_file : 
+            data_tag = "post_BPix"
+        else : 
+            data_tag = "pre_BPix"
         cfgFile = "Input_2023.yml"
         jsonFileName = "golden_Json/Cert_Collisions2022_355100_362760_Golden.json"
         sfFileName = "DeepCSV_102XSF_V2.csv" # FIXME: Update for year 2022
         
         # --- Electron SF ---
-        json_file = "2023_Summer23/electron.json.gz"
-        era = "2023Re-recoE+PromptFG"   
-        json_sf = f"{os.environ['CMSSW_BASE']}/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/ElectronScale/{json_file}"
-        eleSF = electronSF_natlib(json_sf)
+        if "pre_BPix" in data_tag:
+            eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23/electron.json.gz")
+            era = "2023PromptC"
+        else:
+            eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23BPix/electron.json.gz")
+            era = "2023PromptD"
         set_name = "Electron-ID-SF"
         # --- Reco SF ---
         def reco_wp(pt):
@@ -192,24 +190,24 @@ def main():
         muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst", "MuonSFsyst")
         modulesToRun.append(muSF)
         
-        # --- Muon scale/resolution
-        if "post_BPix" not in data_tag :
-            modulesToRun.append(muonScaleRes_natlib("%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/MuonScale/%s" % (os.environ['CMSSW_BASE'], 
-                                "2023_Summer23.json"), is_mc=isMC, overwritePt=overwritePt, minPt=3.))
-        else :
-            modulesToRun.append(muonScaleRes_natlib("%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/MuonScale/%s" % (os.environ['CMSSW_BASE'], 
-                                "2023_Summer23BPix.json"), is_mc=isMC, overwritePt=overwritePt, minPt=3.))
+        # --- Muon scale/resolution ---
+        if "pre_BPix" in data_tag:
+            muon_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23/muon_scalesmearing.json.gz"
+        else:
+            muon_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23BPix/muon_scalesmearing.json.gz"
+        modulesToRun.append(muonScaleRes_natlib(muon_json, is_mc = isMC, overwritePt = overwritePt, minPt=3.))
+        
         # --- Electron scale/resolution
         EtDependent = True
         if "post_BPix" not in data_tag:
             json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23/electronSS_EtDependent.json.gz"
-            scaleKey = "EGMScale_Compound_Ele_2023preBPix"
-            smearKey = "EGMSmearAndSyst_ElePTsplit_2023preBPix"
+            scaleKey = "EGMScale_Compound_Ele_2023preBPIX"
+            smearKey = "EGMSmearAndSyst_ElePTsplit_2023preBPIX"
         else:
             json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23BPix/electronSS_EtDependent.json.gz"
-            scaleKey = "EGMScale_Compound_Ele_2023postBPix"
-            smearKey = "EGMSmearAndSyst_ElePTsplit_2023postBPix"
-        modulesToRun.append(eleScaleRes_natlib(json_path, scaleKey, smearKey, isMC, EtDependent))
+            scaleKey = "EGMScale_Compound_Ele_2023postBPIX"
+            smearKey = "EGMSmearAndSyst_ElePTsplit_2023postBPIX"
+        modulesToRun.append(eleScaleRes_natlib(json_path, scaleKey, smearKey, overwritePt))
 
     elif "UL18" in first_file or "UL2018" in first_file:
         """UL2018 for identification of 2018 UL data and UL18 for identification of 2018 UL MC
@@ -335,10 +333,10 @@ def main():
 
         if year == 2023 :
             if "pre_BPix" in data_tag :
-                json = "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/puWeights/puWeights_2023_Summer23preBPix.json.gz" % os.environ['CMSSW_BASE']
+                json = "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/puWeights/puWeights_2023_Summer23.json.gz" % os.environ['CMSSW_BASE']
                 key = "Collisions2023_366403_369802_eraBC_GoldenJson"
             else :
-                json = "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/puWeights/puWeights_2023_Summer23postBPix.json.gz" % os.environ['CMSSW_BASE']
+                json = "%s/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/puWeights/puWeights_2023_Summer23BPix.json.gz" % os.environ['CMSSW_BASE']
                 key = "Collisions2023_369803_370790_eraD_GoldenJson"
             modulesToRun.insert(0, puWeightProducer_natlib(json, key))
 

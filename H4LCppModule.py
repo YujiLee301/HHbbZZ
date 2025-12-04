@@ -50,14 +50,14 @@ class HZZAnalysisCppProducer(Module):
           self.worker.InitializeFsrPhotonCut(cfg['FsrPhoton']['pTcut'],cfg['FsrPhoton']['Etacut'],cfg['FsrPhoton']['Isocut'],cfg['FsrPhoton']['dRlcut'],cfg['FsrPhoton']['dRlOverPtcut'])
           self.worker.InitializeJetcut(cfg['Jet']['pTcut'],cfg['Jet']['Etacut'],cfg['Jet']['Ncut'])
           self.worker.InitializeEvtCut(cfg['MZ1cut'],cfg['MZZcut'],cfg['Higgscut']['down'],cfg['Higgscut']['up'],cfg['Zmass'],cfg['MZcut']['down'],cfg['MZcut']['up'])
-          self.PUweightfile = cfg["outputdataNPV"]
-          self.PUweighthisto = cfg["PUweightHistoName"]
-        PUinput_file = ROOT.TFile.Open(self.PUweightfile)
-        PUinput_hist = PUinput_file.Get(self.PUweighthisto)
-        self.PUweight_list = []
-        for i in range(1, PUinput_hist.GetNbinsX() + 1):
-            self.PUweight_list.append(PUinput_hist.GetBinContent(i))
-        PUinput_file.Close()
+          #self.PUweightfile = cfg["outputdataNPV"]
+          #self.PUweighthisto = cfg["PUweightHistoName"]
+        #PUinput_file = ROOT.TFile.Open(self.PUweightfile)
+        #PUinput_hist = PUinput_file.Get(self.PUweighthisto)
+        #self.PUweight_list = []
+        #for i in range(1, PUinput_hist.GetNbinsX() + 1):
+        #    self.PUweight_list.append(PUinput_hist.GetBinContent(i))
+        #PUinput_file.Close()
         self.passtrigEvts = 0
         self.passZZEvts = 0
         self.cfgFile = cfgFile
@@ -306,7 +306,7 @@ class HZZAnalysisCppProducer(Module):
         else:
             return keepIt
         if(isMC):
-            pileupWeight = self.PUweight_list[event.Pileup_nPU]
+            pileupWeight = 1.0
         electrons = Collection(event, "Electron")
         muons = Collection(event, "Muon")
         fsrPhotons = Collection(event, "FsrPhoton")
@@ -343,7 +343,7 @@ class HZZAnalysisCppProducer(Module):
             hasCutBased = "Muon_looseId" in branches
             hasLowPtMVA = "Muon_mvaLowPtId" in branches #run2
             hasMVA_Run2 = "Muon_mvaId" in branches #run2
-            hasMVA_Run3 = "Muon_mvaMuID_WP" in branches #run3
+            hasMVA_Run3 = "Muon_mvaLowPt" in branches #run3
             
             looseId  = xm.looseId  if hasCutBased else False
             mediumId = xm.mediumId if hasCutBased else False
@@ -566,7 +566,7 @@ class HZZAnalysisCppProducer(Module):
         if self.worker.flag4e:
             mass4e = mass4l
         if self.worker.flag2e2mu:
-            mass4e = mass4l
+            mass2e2mu = mass4l
         if self.worker.flag4mu:
             mass4mu = mass4l
         if (self.worker.isFSR==False & passedFullSelection):
