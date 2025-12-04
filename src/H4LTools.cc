@@ -2,6 +2,7 @@
 #include <TLorentzVector.h>
 #include <TRandom3.h>
 #include <vector>
+#include <iostream>
 
 std::vector<unsigned int> H4LTools::goodLooseElectrons2012(){
     std::vector<unsigned int> LooseElectronindex;
@@ -144,7 +145,7 @@ std::vector<bool> H4LTools::pass_Mu_Id(const std::string& era, const std::string
         else if (method == "MVA-Based") {
             if (era == "Run2") {
                 // Run2 NanoAOD MVA ID
-                if (Muon_pt[i] < 5.0) { 
+                if (Muon_pt[i] < 3.0) { 
                     // soft muon, use Muon_mvaLowPtId
                     if      (wp == "loose")  passId.push_back(Muon_mvaLowPtId[i] >= 1);
                     else if (wp == "medium") passId.push_back(Muon_mvaLowPtId[i] >= 2);
@@ -522,7 +523,6 @@ void H4LTools::LeptonSelection(){
         muid.push_back(AllMuid[Muonindex[imu]]);
         Muiso.push_back(Muon_pfRelIso03_all[Muonindex[imu]]);
     }
-    
     //ElelistFsr = BatchFsrRecovery(Elelist); 
     //MulistFsr = BatchFsrRecovery(Mulist);
     for(unsigned int ae=0; ae<Eid.size();ae++){
@@ -556,9 +556,7 @@ void H4LTools::LeptonSelection(){
             if (isMC) lep_genindex.push_back(Electron_genPartIdx[Electronindex[ae]]);
             else lep_genindex.push_back(-1);
         }
-        
     }
-
     for(unsigned int amu=0; amu<muid.size();amu++){
         float RelIsoNoFsr;
         RelIsoNoFsr = Muiso[amu];
@@ -589,12 +587,9 @@ void H4LTools::LeptonSelection(){
             else lep_genindex.push_back(-1);
         }
     }
-    
 }
 bool H4LTools::findZCandidate(){
-    
     TLorentzVector z1,z2;
-    
     if (nTightEle>=4) {
         cut4e++;
         flag4e = true;
@@ -606,8 +601,10 @@ bool H4LTools::findZCandidate(){
     else if ((nTightMu>=2)&&(nTightEle>=2)){
         cut2e2mu++;
         flag2e2mu = true;
-    } 
-   
+    }
+    else {
+        return false;
+    }
     
     if(TightEleindex.size()>1){
         for(unsigned int ke=0; ke<(TightEleindex.size()-1);ke++){
@@ -641,6 +638,9 @@ bool H4LTools::findZCandidate(){
                         Zlep1chg.push_back(Elechg[TightEleindex[ke]]);
                         Zlep2chg.push_back(Elechg[TightEleindex[je]]);
                     }
+                }
+                else{
+                    continue;
                 }
             }
         }
@@ -679,6 +679,9 @@ bool H4LTools::findZCandidate(){
                         Zlep2chg.push_back(Muchg[TightMuindex[jmu]]);
                     }
                 }
+                else{
+                    continue;
+                }
             }
         }
     }
@@ -690,7 +693,6 @@ bool H4LTools::findZCandidate(){
         Zlistnofsr.push_back(Zcannofsr);
     }
     
-    
     Zsize = Zlist.size();    
     if (Zsize>0){
         return true;
@@ -698,28 +700,30 @@ bool H4LTools::findZCandidate(){
     else{
         return false;
     }
-
-
 }
 
-
 bool H4LTools::ZZSelection(){
-    
+
     bool foundZZCandidate = false;
     if(!findZCandidate()){
+        // std::cout << "[DEBUG] findZCandidate=" << findZCandidate() << " foundZZCandidate=" << foundZZCandidate << std::endl;
         return foundZZCandidate;
     }
     if((nTightMu+nTightEle)<4){
+        // std::cout << "[DEBUG] nTightMu+nTightEle=" << (nTightMu+nTightEle) << " foundZZCandidate=" << foundZZCandidate << std::endl;
         return foundZZCandidate;
     } 
     
     if((abs(nTightEleChgSum)+abs(nTightMuChgSum))>(nTightMu+nTightEle-4)){
+        // std::cout << "[DEBUG] abs(nTightEleChgSum)+abs(nTightMuChgSum)=" << (abs(nTightEleChgSum)+abs(nTightMuChgSum)) << " foundZZCandidate=" << foundZZCandidate << std::endl;
         return foundZZCandidate;
     }
     if(Zsize<2){
+        // std::cout << "[DEBUG] Zsize=" << Zsize << " foundZZCandidate=" << foundZZCandidate << std::endl;
         return foundZZCandidate;
     }
     if(jetidx.size()<JetNcut){
+        // std::cout << "[DEBUG] jetidx.size()=" << jetidx.size() << " foundZZCandidate=" << foundZZCandidate << std::endl;
         return foundZZCandidate;
     }
     //Find ZZ candidate
@@ -1091,8 +1095,6 @@ bool H4LTools::ZZSelection(){
 	D_L1Zg = me_0plus_JHU / (me_0plus_JHU + ((p_GG_SIG_ghg2_1_ghza1prime2_1E4_JHUGen/1e8) * pow(getDL1ZgsConstant(massZZ),2)));
     mela->resetInputEvent();
     return foundZZCandidate;
-    
-
 }
 
 float H4LTools::getDg4Constant(float ZZMass){

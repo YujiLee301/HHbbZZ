@@ -36,7 +36,7 @@ Higgscut:
 
 Electron:
   pTcut:
-    7
+    5
   Etacut:
     2.5
   Sip3dcut:
@@ -65,7 +65,7 @@ Electron:
     0.35
 Muon:
   pTcut:
-    5
+    3
   Etacut:
     2.4
   Sip3dcut:

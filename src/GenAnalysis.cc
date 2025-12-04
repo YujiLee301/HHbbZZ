@@ -31,9 +31,8 @@ void GenAnalysis::SetGenVariables(){
     TLorentzVector LS3_Z1_1, LS3_Z1_2, LS3_Z2_1, LS3_Z2_2, GENgoodj1,GENgoodj2,GEN_H1Vec,GEN_H2Vec;
     int GENmom1_id=-999, GENmom2_id=-999;
     int counter_initParticle=0;
+
     for(unsigned int genpidx=0; genpidx<nGenPart; genpidx++){
-        GENlep_MomId.push_back(-1);
-        GENlep_MomMomId.push_back(-1);
         if(GenPart_status[genpidx]==21){
             counter_initParticle++;
             if (counter_initParticle==1){
@@ -50,9 +49,13 @@ void GenAnalysis::SetGenVariables(){
              }
         }
 
-        if (abs(GenPart_pdgId[genpidx])==11 || abs(GenPart_pdgId[genpidx])==13 || abs(GenPart_pdgId[genpidx])==15){
-            if (!(GenPart_status[genpidx]==1 || abs(GenPart_pdgId[genpidx])==15)) continue;
-            if (!(abs(motherID(genpidx))==23 || abs(motherID(genpidx))==443 || abs(motherID(genpidx))==553 || abs(motherID(genpidx))==24 || abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331 ) ) continue;
+        if (abs(GenPart_pdgId[genpidx])==11 || abs(GenPart_pdgId[genpidx])==13 || abs(GenPart_pdgId[genpidx])==15){        
+            if (!(GenPart_status[genpidx]==1 || abs(GenPart_pdgId[genpidx])==15)) { //not stable and not tau
+                continue;
+            }
+            if (!(abs(motherID(genpidx))==23 || abs(motherID(genpidx))==443 || abs(motherID(genpidx))==553 || abs(motherID(genpidx))==24 || abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331 ) ) {
+                continue;
+            }
             //if ((abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331)&&(abs(mothermotherID(genpidx))==23)){
             //    std::cout << "Keep lepton: PDG ID = " << GenPart_pdgId[genpidx]
             //      << ", status = " << GenPart_status[genpidx]
@@ -68,13 +71,15 @@ void GenAnalysis::SetGenVariables(){
                         break;
                     }
                 }
-                if (!hasStableLepDaughter) continue;
+                if (!hasStableLepDaughter) {
+                    continue;
+                }
             }
             
             nGENLeptons++;
             // Collect FSR photons
             TLorentzVector lep_dressed;
-            lep_dressed.SetPtEtaPhiM(GenPart_pt[genpidx],GenPart_eta[genpidx],GenPart_phi[genpidx],GenPart_mass[genpidx]);
+            lep_dressed.SetPtEtaPhiM(GenPart_pt[genpidx],GenPart_eta[genpidx],GenPart_phi[genpidx],GenPart_mass[genpidx]);            
             set<int> gen_fsrset;
             for(size_t k=0; k<GenPart_pt.size();k++){
                 if( GenPart_status[k] != 1) continue; // stable particles only
@@ -105,10 +110,7 @@ void GenAnalysis::SetGenVariables(){
             GENlep_eta.push_back( lep_dressed.Eta() );
             GENlep_phi.push_back( lep_dressed.Phi() );
             GENlep_mass.push_back( lep_dressed.M() );
-            GENlep_MomId.pop_back();
-            GENlep_MomMomId.pop_back();
             GENlep_MomId.push_back(motherID(genpidx));
-            GENlep_MomMomId.push_back(mothermotherID(genpidx));
 
             TLorentzVector thisLep;
             thisLep.SetPtEtaPhiM(lep_dressed.Pt(),lep_dressed.Eta(),lep_dressed.Phi(),lep_dressed.M());
