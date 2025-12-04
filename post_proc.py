@@ -76,7 +76,6 @@ def main():
     isMC = "/data/" not in first_file
 
     print(first_file, "\n isMC = ", isMC)
-
     if "Summer22" in first_file or "Run2022" in first_file:
         """Summer22 and Run2022 for identification of 2022 MC and data respectiverly
         """
@@ -144,7 +143,7 @@ def main():
         modulesToRun.append(eleScaleRes_natlib(eleScale_json, scaleKey, smearKey, overwritePt))
 
     elif "Summer23" in first_file or "Run2023" in first_file:
-        """Summer23 and Run2023 for identification of 2022 M3 and data respectiverly
+        """Summer23 and Run2023 for identification of 2022 MC and data respectiverly
         """
         year = 2023
         if "23BPix" in first_file : 
@@ -298,8 +297,7 @@ def main():
             smearKey = "EGMSmearAndSyst_Ele_2016postVFP"
         modulesToRun.append(eleScaleRes_natlib(json_path, scaleKey, smearKey, isMC, True))
         
-    H4LCppModule = lambda: HZZAnalysisCppProducer(year,cfgFile, isMC, isFSR)
-    modulesToRun.extend([H4LCppModule()])
+    modulesToRun.append(HZZAnalysisCppProducer(year,cfgFile, isMC, isFSR))
         
     print(("Input json file: {}".format(jsonFileName)))
     print(("Input cfg file: {}".format(cfgFile)))
@@ -312,7 +310,7 @@ def main():
             #jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=year, jesUncert="All", jetType = "AK4PFchs")
             #fatJetCorrector = createJMECorrector(isMC=isMC, dataYear=year, jesUncert="All", jetType = "AK8PFPuppi")
             # btagSF = lambda: btagSFProducer("UL"+str(year), algo="deepjet",selectedWPs=['L','M','T','shape_corr'], sfFileName=sfFileName)
-            btagSF = lambda: btagSFProducer(era = "UL"+str(year), algo = "deepcsv")
+            #btagSF = lambda: btagSFProducer(era = "UL"+str(year), algo = "deepcsv")
             puidSF = lambda: JetSFMaker("%s" % year)
             #modulesToRun.extend([jetmetCorrector(), fatJetCorrector()])#, puidSF()
             # # modulesToRun.extend([jetmetCorrector(), fatJetCorrector(), btagSF(), puidSF()])
@@ -343,7 +341,19 @@ def main():
 
         # INFO: Keep the `fwkJobReport=False` to trigger `haddnano.py`
         #            otherwise the output file will have larger size then expected. Reference: https://github.com/cms-nanoAOD/nanoAOD-tools/issues/249
-        p=PostProcessor(".",testfilelist, None, None,modules = modulesToRun, provenance=True,fwkJobReport=True,haddFileName="skimmed_nano.root", maxEntries=entriesToRun, prefetch=DownloadFileToLocalThenRun, outputbranchsel="keep_and_drop.txt")
+        p=PostProcessor(
+            ".",
+            testfilelist, 
+            cut = "(Sum$(Muon_pt>3) + Sum$(Electron_pt>5) >= 4) && (nJet>=2)",
+            branchsel = None,
+            modules = modulesToRun, 
+            provenance = True,
+            fwkJobReport = True,
+            haddFileName = "skimmed_nano.root", 
+            maxEntries = entriesToRun, 
+            prefetch = DownloadFileToLocalThenRun, 
+            outputbranchsel = "keep_and_drop.txt"
+        )
     else:
         #if (not args.NOsyst):
             # FIXME: JES not used properly
