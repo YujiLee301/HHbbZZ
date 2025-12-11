@@ -373,7 +373,7 @@ class HZZAnalysisCppProducer(Module):
             GENphij2 = self.genworker.GENphij2
             GENmj2 = self.genworker.GENmj2
         
-        passedFiducialSelection = self.genworker.passedFiducialSelection
+            passedFiducialSelection = self.genworker.passedFiducialSelection
 
         Electron_Fsr_pt_vec = self.worker.ElectronFsrPt()
         Electron_Fsr_eta_vec = self.worker.ElectronFsrEta()
@@ -479,9 +479,6 @@ class HZZAnalysisCppProducer(Module):
                     lep_genindex.append(lep_genindex_vec[i])
         if (foundZZCandidate):
             self.passZZEvts += 1
-        #if (foundZZCandidate | passedFiducialSelection):
-        if (foundZZCandidate):
-        #if (passedFiducialSelection):
             EvtNum += 1
             keepIt = True
         if self.worker.RecoFourMuEvent: finalState = 1
