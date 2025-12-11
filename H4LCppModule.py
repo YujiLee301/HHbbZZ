@@ -50,14 +50,7 @@ class HZZAnalysisCppProducer(Module):
           self.worker.InitializeFsrPhotonCut(cfg['FsrPhoton']['pTcut'],cfg['FsrPhoton']['Etacut'],cfg['FsrPhoton']['Isocut'],cfg['FsrPhoton']['dRlcut'],cfg['FsrPhoton']['dRlOverPtcut'])
           self.worker.InitializeJetcut(cfg['Jet']['pTcut'],cfg['Jet']['Etacut'],cfg['Jet']['Ncut'])
           self.worker.InitializeEvtCut(cfg['MZ1cut'],cfg['MZZcut'],cfg['Higgscut']['down'],cfg['Higgscut']['up'],cfg['Zmass'],cfg['MZcut']['down'],cfg['MZcut']['up'])
-          #self.PUweightfile = cfg["outputdataNPV"]
-          #self.PUweighthisto = cfg["PUweightHistoName"]
-        #PUinput_file = ROOT.TFile.Open(self.PUweightfile)
-        #PUinput_hist = PUinput_file.Get(self.PUweighthisto)
-        #self.PUweight_list = []
-        #for i in range(1, PUinput_hist.GetNbinsX() + 1):
-        #    self.PUweight_list.append(PUinput_hist.GetBinContent(i))
-        #PUinput_file.Close()
+
         self.passtrigEvts = 0
         self.passZZEvts = 0
         self.cfgFile = cfgFile
@@ -174,7 +167,6 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("GENmj2", "F")
         self.out.branch("EvtNum",  "I")
         self.out.branch("Weight",  "F")
-        self.out.branch("pileupWeight",  "F")
         self.out.branch("dataMCWeight_new",  "F")
         self.out.branch("prefiringWeight",  "F")
         self.out.branch("passedTrig",  "O")
@@ -256,7 +248,6 @@ class HZZAnalysisCppProducer(Module):
         nZXCRFailedLeptons=0
         prefiringWeight = 1
         dataMCWeight_new = 1
-        pileupWeight = 1
         mass4e=0
         mass2e2mu=0
         mass4mu=0
@@ -305,8 +296,6 @@ class HZZAnalysisCppProducer(Module):
             self.passtrigEvts += 1
         else:
             return keepIt
-        if(isMC):
-            pileupWeight = 1.0
         electrons = Collection(event, "Electron")
         muons = Collection(event, "Muon")
         fsrPhotons = Collection(event, "FsrPhoton")
@@ -384,7 +373,7 @@ class HZZAnalysisCppProducer(Module):
             GENphij2 = self.genworker.GENphij2
             GENmj2 = self.genworker.GENmj2
         
-        passedFiducialSelection = self.genworker.passedFiducialSelection
+            passedFiducialSelection = self.genworker.passedFiducialSelection
 
         Electron_Fsr_pt_vec = self.worker.ElectronFsrPt()
         Electron_Fsr_eta_vec = self.worker.ElectronFsrEta()
@@ -490,9 +479,6 @@ class HZZAnalysisCppProducer(Module):
                     lep_genindex.append(lep_genindex_vec[i])
         if (foundZZCandidate):
             self.passZZEvts += 1
-        #if (foundZZCandidate | passedFiducialSelection):
-        if (foundZZCandidate):
-        #if (passedFiducialSelection):
             EvtNum += 1
             keepIt = True
         if self.worker.RecoFourMuEvent: finalState = 1
@@ -547,7 +533,7 @@ class HZZAnalysisCppProducer(Module):
         invjj = self.worker.invjj
 
         if pTL2>pTL1:
-            pTL1, pTl2 = pTL2, pTL1
+            pTL1, pTL2 = pTL2, pTL1
             etaL1, etaL2 = etaL2, etaL1
             phiL1, phiL2 = phiL2, phiL1
             massL1,massL2 = massL2, massL1
@@ -569,13 +555,13 @@ class HZZAnalysisCppProducer(Module):
             mass2e2mu = mass4l
         if self.worker.flag4mu:
             mass4mu = mass4l
-        if (self.worker.isFSR==False & passedFullSelection):
+        if (self.worker.isFSR==False and passedFullSelection):
             pT4l = self.worker.ZZsystemnofsr.Pt()
             eta4l = self.worker.ZZsystemnofsr.Eta()
             phi4l = self.worker.ZZsystemnofsr.Phi()
             mass4l = self.worker.ZZsystemnofsr.M()
             rapidity4l = self.worker.ZZsystemnofsr.Rapidity()
-        Weight = event.genWeight * pileupWeight * dataMCWeight_new * prefiringWeight
+        Weight = event.genWeight * dataMCWeight_new * prefiringWeight 
         self.out.fillBranch("mass4l",mass4l)
         self.out.fillBranch("GENmass4l",GENmass4l)
         self.out.fillBranch("mass4e",mass4e)
@@ -654,7 +640,6 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("GENphij2",GENphij2)
         self.out.fillBranch("GENmj2",GENmj2)
         
-        self.out.fillBranch("pileupWeight",pileupWeight)
         self.out.fillBranch("dataMCWeight_new",dataMCWeight_new)
         self.out.fillBranch("prefiringWeight",prefiringWeight)
         self.out.fillBranch("Weight",Weight)
