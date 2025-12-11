@@ -18,7 +18,7 @@ def ZZSelection(Electrons, Muons, Eid, muid):
         else:
             Elechg.append(1)
 
-        Ele = ROOT.TLorentzVector
+        Ele = ROOT.TLorentzVector()
         Ele.SetPtEtaPhiM(x.pt,x.eta,x.phi,x.mass)
         Elelist.append(Ele)
 
@@ -28,7 +28,7 @@ def ZZSelection(Electrons, Muons, Eid, muid):
         else:
             Muchg.append(1)
 
-        Mu = ROOT.TLorentzVector
+        Mu = ROOT.TLorentzVector()
         Mu.SetPtEtaPhiM(x.pt,x.eta,x.phi,x.mass)
         Mulist.append(Mu)
         Muiso.append(x.pfRelIso03_all)
@@ -119,7 +119,7 @@ def ZZSelection(Electrons, Muons, Eid, muid):
                         Zlep2chg.append(Muchg[TightEleindex[j]])
 
     if(len(Zlist)<2):
-        return foundZZCandidate, SelectedEleIndex, SelectedMuIndex
+        return foundZZCandidate#, SelectedEleIndex, SelectedMuIndex
     
     #Find ZZ candidates
     Z1CanIndex = []
@@ -140,36 +140,36 @@ def ZZSelection(Electrons, Muons, Eid, muid):
             if (nPassPt20 == False): continue #lep Pt requirements
 
             if ((Zlep1chg[m]+Zlep1chg[n])==0):
-                lepA = ROOT.TlorentzVector()
-                lepB = ROOT.TlorentzVector()
-                lepAB = ROOT.TlorentzVector()
+                lepA = ROOT.TLorentzVector()
+                lepB = ROOT.TLorentzVector()
+                lepAB = ROOT.TLorentzVector()
                 lepA.SetPtEtaPhiM(Zlep1pt[m],Zlep1eta[m],Zlep1phi[m],Zlep1mass[m])
                 lepB.SetPtEtaPhiM(Zlep1pt[n],Zlep1eta[n],Zlep1phi[n],Zlep1mass[n])
                 lepAB = lepA + lepB
                 if(lepAB.M()<4): continue  #QCD suppression
 
             if ((Zlep1chg[m]+Zlep2chg[n])==0):
-                lepA = ROOT.TlorentzVector()
-                lepB = ROOT.TlorentzVector()
-                lepAB = ROOT.TlorentzVector()
+                lepA = ROOT.TLorentzVector()
+                lepB = ROOT.TLorentzVector()
+                lepAB = ROOT.TLorentzVector()
                 lepA.SetPtEtaPhiM(Zlep1pt[m],Zlep1eta[m],Zlep1phi[m],Zlep1mass[m])
                 lepB.SetPtEtaPhiM(Zlep2pt[n],Zlep2eta[n],Zlep2phi[n],Zlep2mass[n])
                 lepAB = lepA + lepB
                 if(lepAB.M()<4): continue  #QCD suppression
 
             if ((Zlep2chg[m]+Zlep1chg[n])==0):
-                lepA = ROOT.TlorentzVector()
-                lepB = ROOT.TlorentzVector()
-                lepAB = ROOT.TlorentzVector()
+                lepA = ROOT.TLorentzVector()
+                lepB = ROOT.TLorentzVector()
+                lepAB = ROOT.TLorentzVector()
                 lepA.SetPtEtaPhiM(Zlep2pt[m],Zlep2eta[m],Zlep2phi[m],Zlep2mass[m])
                 lepB.SetPtEtaPhiM(Zlep1pt[n],Zlep1eta[n],Zlep1phi[n],Zlep1mass[n])
                 lepAB = lepA + lepB
                 if(lepAB.M()<4): continue  #QCD suppression
 
             if ((Zlep1chg[m]+Zlep1chg[n])==0):
-                lepA = ROOT.TlorentzVector()
-                lepB = ROOT.TlorentzVector()
-                lepAB = ROOT.TlorentzVector()
+                lepA = ROOT.TLorentzVector()
+                lepB = ROOT.TLorentzVector()
+                lepAB = ROOT.TLorentzVector()
                 lepA.SetPtEtaPhiM(Zlep2pt[m],Zlep2eta[m],Zlep2phi[m],Zlep2mass[m])
                 lepB.SetPtEtaPhiM(Zlep1pt[n],Zlep1eta[n],Zlep1phi[n],Zlep1mass[n])
                 lepAB = lepA + lepB

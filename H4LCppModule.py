@@ -536,7 +536,7 @@ class HZZAnalysisCppProducer(Module):
         invjj = self.worker.invjj
 
         if pTL2>pTL1:
-            pTL1, pTl2 = pTL2, pTL1
+            pTL1, pTL2 = pTL2, pTL1
             etaL1, etaL2 = etaL2, etaL1
             phiL1, phiL2 = phiL2, phiL1
             massL1,massL2 = massL2, massL1
@@ -558,7 +558,7 @@ class HZZAnalysisCppProducer(Module):
             mass2e2mu = mass4l
         if self.worker.flag4mu:
             mass4mu = mass4l
-        if (self.worker.isFSR==False & passedFullSelection):
+        if (self.worker.isFSR==False and passedFullSelection):
             pT4l = self.worker.ZZsystemnofsr.Pt()
             eta4l = self.worker.ZZsystemnofsr.Eta()
             phi4l = self.worker.ZZsystemnofsr.Phi()
