@@ -9,23 +9,90 @@ keep BeamSpot*
 #
 #
 #   GEN
-#keep GenFilter*
-#
-#   Others
-#keep LowPtElectron*
-#keep nLowPtElectron*
-keep OtherPV*
-keep nOtherPV*
-keep PV*
+# keep GenFilter*
+# keep nGenJetAK8
+# keep GenJetAK8*
+# keep nGenJet
+# keep GenJet*
+# keep nGenPart
+# keep GenPart*
+# keep nSubGenJetAK8
+# keep SubGenJetAK8*
+# keep Generator*
+# keep GenV*
+# keep gen*
+# keep Gen*
+keep GENjet_hadronFlavour
+keep LHE*
+keep nLHE*
+keep nPS*
+keep PS*
+# keep Electron_gen*
+# keep nGenDressedLepton
+# keep GenDressedLepton*
 #
 #
 #     Trigger
-#
-#keep HLT*
-#
-#keep Flag*
+# keep L1*
+# keep HLT*
 #
 #
+#     Leptons
+# keep nPhotonF
+# keep Photon*
+# keep nElectron
+keep Electron*
+# keep nMuon
+keep Muon*
+# keep nTau
+# keep Tau*
+# keep HTXS*
+# keep nLowPtElectron
+# keep LowPtElectron*
+#
+#
+#    JetMet
+keep btag*
+# keep CaloMET*
+# keep ChsMET*
+# keep nCorrT1METJet
+# keep CorrT1METJet*
+# keep DeepMET*
+# keep nFatJet
+# keep FatJet*
+# keep nIsoTrack
+# keep IsoTrack*
+keep nJet
+keep Jet*
+
+
+# keep GenMET*
+# keep MET*
+keep Pileup*
+keep PuppiMET*
+# keep RawMET*
+# keep RawPuppiMET*
+# keep fixedGridRho*
+# keep Rho_*
+#keep nSubJet
+#keep SubJet*
+#keep TkMET*
+#keep genTtbarId
+#
+#
+#    Tracks and vertece
+keep nOtherPV
+keep OtherPV*
+keep PV*
+# keep nSV
+# keep SV*
+#
+#
+#      Event Weights
+keep *Weight*
+#
+#
+#      User defined variables
 keep *4l
 keep *Z1
 keep *Z2
@@ -40,73 +107,7 @@ keep GEN*
 keep njet*
 keep D_*
 keep lep*
-keep *Weight
-keep *Weight*
-# keep nPhotonF
-# keep Photon*
-# keep nElectron
-# keep Electron*
-# keep nMuon
-# keep Muon*
-# keep nTau
-# keep Tau*
-# keep HTXS*
-keep btag*
-# keep CaloMET*
-# keep ChsMET*
-# keep nCorrT1METJet
-# keep CorrT1METJet*
-# keep DeepMET*
-# keep nFatJet
-# keep FatJet*
-# keep nGenJetAK8
-# keep GenJetAK8*
-# keep nGenJet
-# keep GenJet*
-# keep nGenPart
-# keep GenPart*
-# keep nSubGenJetAK8
-# keep SubGenJetAK8*
-# keep Generator*
-# keep GenV*
-# keep gen*
-keep LHE*
-keep nLHE*
-keep nPS*
-keep PS*
-#keep nIsoTrack
-#keep IsoTrack*
-#keep nJet
-#keep Jet*
-#keep L1*
-#keep nLowPtElectron
-#keep LowPtElectron*
-#keep GenMET*
-#keep MET*
-keep Pileup*
-keep PuppiMET*
-#keep RawMET*
-#keep RawPuppiMET*
-#keep fixedGridRho*
-#keep Rho_*
-#keep nGenDressedLepton
-#keep GenDressedLepton*
-#keep nSubJet
-#keep SubJet*
-#keep TkMET*
-#keep genTtbarId
-keep nOtherPV
-keep OtherPV*
-keep PV*
-#keep nSV
-#keep SV*
-#keep Electron_gen*
-#keep FatJet_*
-#keep Gen*
-keep genWeight
-#keep Jet_*
-keep Muon*
 keep invjj
-keep GENjet_hadronFlavour
 keep goodJet*
-keep Electron*
+keep Flag_JetVetoed*
+
