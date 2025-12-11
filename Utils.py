@@ -119,7 +119,7 @@ def ZZSelection(Electrons, Muons, Eid, muid):
                         Zlep2chg.append(Muchg[TightEleindex[j]])
 
     if(len(Zlist)<2):
-        return foundZZCandidate#, SelectedEleIndex, SelectedMuIndex
+        return foundZZCandidate, SelectedEleIndex, SelectedMuIndex
     
     #Find ZZ candidates
     Z1CanIndex = []
