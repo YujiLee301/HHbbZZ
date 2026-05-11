@@ -36,6 +36,7 @@ class GenAnalysis{
       std::vector<int> GENlep_status;
       std::vector<int> GENlep_MomId;
       std::vector<int> GENlep_MomMomId;
+      std::vector<int> GENlep_MomMomMomId;
       float GENMH, GENmassZZ, GENpTZZ;
       float Zmass=91.1876;
       double genIsoConeSizeEl, genIsoConeSizeMu;
@@ -55,6 +56,15 @@ class GenAnalysis{
       int GENjet_Hindex[2];
       int flag4e, flag4mu, flag2e2mu,flagpassZ1,flagpassFid;
       int nGEN4e, nGEN4mu, nGEN2e2mu,nGEN4epassZ1,nGEN4epassFid,nGEN4mupassZ1,nGEN4mupassFid, nGEN2e2mupTEtaisocuts,nGEN2e2mupassZ1,nGEN2e2mupassFid;
+      
+      //======= K-factor variables =======
+      float GEN_sqrt_s_hat = -1;      // sqrt(s_hat) for EWK corrections
+      float GEN_t_hat = -1;           // t_hat for EWK corrections  
+      int GEN_quark_type = 0;         // Initial state quark type (1=d, 2=u, 3=s, 4=c, 5=b)
+      float GEN_dPhiZZ = -1;          // |dPhi(Z1,Z2)| for QCD k-factors
+      int GEN_final_state = -1;       // 1=4e/4mu/4tau, 2=2e2mu/2e2tau
+      //===========================================
+      
       void SetGenParts(float GenPart_pt_, float GenPart_eta_,float GenPart_phi_,float GenPart_mass_,int GenPart_pdgId_,int GenPart_status_,int GenPart_statusFlags_,int GenPart_genPartIdxMother_){
         GenPart_pt.push_back(GenPart_pt_);
         GenPart_eta.push_back(GenPart_eta_);
@@ -77,6 +87,13 @@ class GenAnalysis{
         nGenPart = nGenPart_;
         nGenJet = nGenJet_;
       }
+
+      //---------DY 0to40----------
+      //void SetEventWeights(float lhe_vpt) { 
+      //    current_LHE_Vpt = lhe_vpt; 
+      //}
+      //---------DY 0to40----------
+
       void Initialize(){
         passedFiducialSelection=false;
         nGenPart = 0; nGENLeptons=0;nGenJet = 0; GENMH = 0; GENmassZZ= 0; GENpTZZ= 0; GENnjets_pt30_eta4p7=0;GENnjets_pt30_eta2p5=0;
@@ -87,18 +104,28 @@ class GenAnalysis{
         GENZ_DaughtersId[0]=0;GENZ_DaughtersId[1]=0;
         for (int i=0; i<4; i++) {GENlep_Hindex[i]=-1;}
         for (int i=0; i<2; i++) {GENjet_Hindex[i]=-1;}
+
+        //======= Reset k-factor variables =======
+        GEN_sqrt_s_hat = -1;
+        GEN_t_hat = -1;
+        GEN_quark_type = 0;
+        GEN_dPhiZZ = -1;
+        GEN_final_state = -1;
+        //=========================================
+
         GenPart_pt.clear(); GenPart_eta.clear(); GenPart_phi.clear(); GenPart_mass.clear(); GenPart_pdgId.clear();GenPart_status.clear();GenPart_statusFlags.clear(); GenPart_genPartIdxMother.clear();
         GenJet_pt.clear(); GenJet_eta.clear(); GenJet_phi.clear(); GenJet_mass.clear();GenJet_hadronFlavour.clear();
         GENZ_phi.clear(); GENZ_pt.clear(); GENZ_eta.clear(); GENZ_mass.clear();GENZ_MomId.clear();
         GENH_phi.clear(); GENH_pt.clear(); GENH_eta.clear(); GENH_mass.clear();
         GENjet_pt.clear();GENjet_eta.clear();GENjet_phi.clear();GENjet_mass.clear();GENjet_hadronFlavour.clear();b_jets.clear();
-        GENlep_eta.clear();GENlep_pt.clear();GENlep_phi.clear();GENlep_mass.clear();GENlep_id.clear();GENlep_status.clear();GENlep_MomMomId.clear();GENlep_MomId.clear();GENlep_RelIso.clear();
+        GENlep_eta.clear();GENlep_pt.clear();GENlep_phi.clear();GENlep_mass.clear();GENlep_id.clear();GENlep_status.clear();GENlep_MomMomMomId.clear();GENlep_MomMomId.clear();GENlep_MomId.clear();GENlep_RelIso.clear();
         flag4e=0; flag4mu=0; flag2e2mu=0;flagpassZ1=0;flagpassFid=0;
       }
       int total_GEN_lepton_count_allEvents = 0;
       int total_GEN_tau_count_allEvents = 0;
       int motherID(int Genidx);
       int mothermotherID(int Genidx);
+      int mothermothermotherID(int Genidx);
       void SetGenVariables();
       bool mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, unsigned int& L4, bool makeCuts);
 
@@ -121,6 +148,11 @@ class GenAnalysis{
       std::vector<int> b_jets;
 
       unsigned nGenPart, nGenJet;
+
+      //---------DY 0to40----------
+      //float current_LHE_Vpt = 0.0;   
+      //---------DY 0to40----------
+      
 };
 GenAnalysis::GenAnalysis(){
   // FIXME: Add the values to the yaml file

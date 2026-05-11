@@ -15,10 +15,42 @@ class H4LTools {
       H4LTools(int year, bool isMC_);
       float elePtcut, MuPtcut, eleEtacut, MuEtacut, elesip3dCut, Musip3dCut,Zmass,MZ1cut,MZcutup,MZcutdown,MZZcut,HiggscutUp,HiggscutDown;
       float eleLoosedxycut,eleLoosedzcut,MuLoosedxycut,MuLoosedzcut,MuTightdxycut,MuTightdzcut,MuTightTrackerLayercut,MuTightpTErrorcut,MuHighPtBound,eleIsocut,MuIsocut;
-      float fsrphotonPtcut,fsrphotonEtacut,fsrphotonIsocut,fsrphotondRlcut,fsrphotondRlOverPtcut, JetPtcut,JetEtacut,JetNcut;
+      float fsrphotonPtcut,fsrphotonEtacut,fsrphotonIsocut,fsrphotondRlcut,fsrphotondRlOverPtcut,JetPtcut,JetEtacut,JetNcut;
       float btagger1_DJ,btagger1_PN,btagger1_RPT,btagger2_DJ,btagger2_PN,btagger2_RPT,invjj;
       float eleBDTWPLELP,eleBDTWPMELP,eleBDTWPHELP,eleBDTWPLEHP,eleBDTWPMEHP,eleBDTWPHEHP;
       bool RecoFourMuEvent, RecoFourEEvent, RecoTwoETwoMuEvent, RecoTwoMuTwoEEvent;
+
+      int cut4e, cut4mu, cut2e2mu;
+      int cutZZ4e, cutZZ4mu, cutZZ2e2mu, cutm4l4e, cutm4l4mu, cutm4l2e2mu, cutghost2e2mu, cutQCD2e2mu, cutLepPt2e2mu, cutghost4e, cutQCD4e, cutLepPt4e, cutghost4mu, cutQCD4mu, cutLepPt4mu; //2l2j
+    
+      // 2l2j cutflow counters
+      int passTwoTightLeps;
+      int passZCand;
+      int passAtLeastTwoRawJets;
+      int passAtLeastTwoPtEtaJets;
+      int passAtLeastTwoJetIdJets;
+      int passAtLeastTwoPuIdJets;
+      int passTwoGoodJets;
+      int passDijet;
+      int passFinal;
+
+      // event-level jet multiplicities for cumulative jet cutflow
+      int nRawJetsThisEvent;
+      int nPtEtaJetsThisEvent;
+      int nJetIdJetsThisEvent;
+      int nPuIdJetsThisEvent;
+
+      // event-level 2l2j cutflow flags
+      bool eventPassTwoTightLeps;
+      bool eventPassZCand;
+      bool eventPassAtLeastTwoRawJets;
+      bool eventPassAtLeastTwoPtEtaJets;
+      bool eventPassAtLeastTwoJetIdJets;
+      bool eventPassAtLeastTwoPuIdJets;
+      bool eventPassTwoGoodJets;
+      bool eventPassDijet;
+      bool eventPassFinal;
+
       void InitializeElecut(float elePtcut_,float eleEtacut_,float elesip3dCut_,float eleLoosedxycut_,float eleLoosedzcut_,float eleIsocut_,float eleBDTWPLELP_,float eleBDTWPMELP_, float eleBDTWPHELP_,float eleBDTWPLEHP_,float eleBDTWPMEHP_,float eleBDTWPHEHP_){
         elePtcut = elePtcut_;
         eleEtacut = eleEtacut_;
@@ -68,8 +100,7 @@ class H4LTools {
         MZcutup = MZcutup_;
       }
       void SetElectrons(float Electron_pt_, float Electron_eta_, float Electron_phi_, float Electron_mass_, float Electron_dxy_, float Electron_dz_, float Electron_sip3d_, 
-                        bool Electron_mvaFall17V2Iso_WP80_, bool Electron_mvaFall17V2Iso_WP90_, bool Electron_mvaFall17V2Iso_WPL_,
-                        bool Electron_mvaIso_WP80_, bool Electron_mvaIso_WP90_, int Electron_pdgId_, float Electron_pfRelIso03_all_){
+                        float Electron_deltaEtaSC_, float Electron_mvaHZZIso_, bool Electron_mvaIso_WPHZZ_, int Electron_pdgId_, float Electron_pfRelIso03_all_){
         Electron_pt.push_back(Electron_pt_); 
         Electron_phi.push_back(Electron_phi_);
         Electron_eta.push_back(Electron_eta_);
@@ -77,11 +108,9 @@ class H4LTools {
         Electron_dxy.push_back(Electron_dxy_);
         Electron_dz.push_back(Electron_dz_);
         Electron_sip3d.push_back(Electron_sip3d_);
-        Electron_mvaFall17V2Iso_WP80.push_back(Electron_mvaFall17V2Iso_WP80_);
-        Electron_mvaFall17V2Iso_WP90.push_back(Electron_mvaFall17V2Iso_WP90_);
-        Electron_mvaFall17V2Iso_WPL.push_back(Electron_mvaFall17V2Iso_WPL_);
-        Electron_mvaIso_WP80.push_back(Electron_mvaIso_WP80_);
-        Electron_mvaIso_WP90.push_back(Electron_mvaIso_WP90_);
+        Electron_deltaEtaSC.push_back(Electron_deltaEtaSC_);
+        Electron_mvaHZZIso.push_back(Electron_mvaHZZIso_);
+        Electron_mvaIso_WPHZZ.push_back(Electron_mvaIso_WPHZZ_);
         Electron_pdgId.push_back(Electron_pdgId_);
         Electron_pfRelIso03_all.push_back(Electron_pfRelIso03_all_);
       }
@@ -174,8 +203,7 @@ class H4LTools {
         FsrPhoton_phi = FsrPhoton_phi_;
         FsrPhoton_eta = FsrPhoton_eta_;
         FsrPhoton_pt = FsrPhoton_pt_;
-        FsrPhoton_relIso03 = FsrPhoton_relIso03_;
-        
+        FsrPhoton_relIso03 = FsrPhoton_relIso03_; 
       }*/
       void SetGenParts(float GenPart_pt_){
         GenPart_pt.push_back(GenPart_pt_);
@@ -193,11 +221,16 @@ class H4LTools {
         nGenPart = nGenPart_;
       }
       bool isMC;
+      std::string analysisMode;
+      void SetAnalysisMode(const std::string& mode);
+      void SetNanoVersion(int v){ nanoVersion = v; }
+      bool BuildZZCandidate();
+      bool BuildBestDijet();
       std::vector<unsigned int> goodLooseElectrons2012();
       std::vector<unsigned int> goodLooseMuons2012();
       std::vector<unsigned int> goodMuons2015_noIso_noPf(std::vector<unsigned int> Muonindex);
       std::vector<unsigned int> goodElectrons2015_noIso_noBdt(std::vector<unsigned int> Electronindex);
-      std::vector<bool> pass_Ele_Id(const std::string& era, const std::string& wp);
+      std::vector<bool> pass_Ele_Id(int nanoVersion);
       std::vector<bool> pass_Mu_Id(const std::string& era, const std::string& method, const std::string& wp);
       std::vector<unsigned int> goodFsrPhotons();
       unsigned doFsrRecovery(TLorentzVector Lep);
@@ -277,7 +310,7 @@ class H4LTools {
       TLorentzVector Z2nofsr;
       TLorentzVector ZZsystem;
       TLorentzVector ZZsystemnofsr;
-      
+
       std::vector<int> TightEleindex;
       std::vector<int> TightMuindex;
       void Initialize(){
@@ -296,14 +329,14 @@ class H4LTools {
         ElelistFsr.clear();
         MulistFsr.clear();
         Electron_pt.clear();Electron_phi.clear();Electron_eta.clear();Electron_mass.clear();Electron_dxy.clear();Electron_dz.clear();Electron_sip3d.clear();
-        Electron_mvaFall17V2Iso_WP80.clear();Electron_mvaFall17V2Iso_WP90.clear();Electron_mvaFall17V2Iso_WPL.clear();
-        Electron_mvaIso_WP80.clear();Electron_mvaIso_WP90.clear();Electron_pdgId.clear();Electron_genPartIdx.clear();Electron_pfRelIso03_all.clear();
+        Electron_deltaEtaSC.clear();Electron_mvaHZZIso.clear();Electron_mvaIso_WPHZZ.clear();
+        Electron_pdgId.clear();Electron_genPartIdx.clear();Electron_pfRelIso03_all.clear();
         Muon_pt.clear();Muon_phi.clear();Muon_eta.clear();Muon_mass.clear();Muon_dxy.clear();Muon_dz.clear();Muon_sip3d.clear();Muon_ptErr.clear();Muon_pfRelIso03_all.clear();
         Muon_nTrackerLayers.clear();Muon_genPartIdx.clear();Muon_pdgId.clear();Muon_charge.clear();
         Muon_isTracker.clear();Muon_isGlobal.clear();Muon_isPFcand.clear();
         Muon_looseId.clear();Muon_mediumId.clear();Muon_tightId.clear();Muon_mvaLowPtId.clear();Muon_mvaId.clear();Muon_mvaLowPt.clear();
         Jet_pt.clear();Jet_phi.clear();Jet_eta.clear();Jet_mass.clear();Jet_btagDeepC.clear();Jet_btagDeepFlavB.clear();Jet_btagPNetB.clear();Jet_btagRobustParTAK4B.clear();
-        Jet_jetId.clear();Jet_puId.clear(); Zlep1lepindex.clear();Zlep2lepindex.clear();
+        Jet_jetId.clear();Jet_puId.clear(); Zlep1lepindex.clear();Zlep2lepindex.clear(); 
         FsrPhoton_dROverEt2.clear();FsrPhoton_phi.clear();FsrPhoton_eta.clear();FsrPhoton_pt.clear();FsrPhoton_relIso03.clear(); FsrPhoton_electronIdx.clear(); FsrPhoton_muonIdx.clear();
         GenPart_pt.clear();
         Zlist.clear();
@@ -333,6 +366,11 @@ class H4LTools {
         nTightEle = 0; nTightMu = 0; nTightEleChgSum = 0; nTightMuChgSum = 0;
         Lepointer = 0; 
         
+        nRawJetsThisEvent = 0;
+        nPtEtaJetsThisEvent = 0;
+        nJetIdJetsThisEvent = 0;
+        nPuIdJetsThisEvent = 0;
+
         pTL1 = -999; etaL1 = -999; phiL1 = -999; massL1 = -999;
         pTL2 = -999; etaL2 = -999; phiL2 = -999; massL2 = -999;
         pTL3 = -999; etaL3 = -999; phiL3 = -999; massL3 = -999;
@@ -340,10 +378,21 @@ class H4LTools {
 
         pTj1 = -99;  etaj1 = -99;  phij1 = -99;  mj1 = -99; btagger1_DJ = -99; btagger1_PN = -99; btagger1_RPT = -99;
         pTj2 = -99;  etaj2 = -99;  phij2 = -99;  mj2 = -99; btagger2_DJ = -99; btagger2_PN = -99; btagger2_RPT = -99;
-
-        njets_pt30_eta4p7 = 0; invjj = -99;
+        invjj = -99;
+        njets_pt30_eta4p7 = 0;
         RecoFourMuEvent=false; RecoFourEEvent=false; RecoTwoETwoMuEvent=false; RecoTwoMuTwoEEvent=false;
         flag4e=false; flag4mu=false; flag2e2mu=false;
+
+        eventPassTwoTightLeps = false;
+        eventPassZCand = false;
+        eventPassAtLeastTwoRawJets = false;
+        eventPassAtLeastTwoPtEtaJets = false;
+        eventPassAtLeastTwoJetIdJets = false;
+        eventPassAtLeastTwoPuIdJets = false;
+        eventPassTwoGoodJets = false;
+        eventPassDijet = false;
+        eventPassFinal = false;
+
       }
       bool isFSR=true;
       unsigned int Zsize=0;
@@ -356,26 +405,29 @@ class H4LTools {
 
       Mela* mela;
       float me_0plus_JHU, me_qqZZ_MCFM, p0plus_m4l, bkg_m4l;
-      float D_bkg_kin, D_bkg, D_g4, D_g1g4, D_0m, D_CP, D_0hp, D_int, D_L1, D_L1_int, D_L1Zg, D_L1Zgint;
+      float D_bkg_kin, D_bkg, D_g4, D_g1g4, D_CP, D_int, D_L1_int, D_L1Zgint;
+      float D_0m, D_0hp, D_L1, D_L1Zg;
       float D_bkg_kin_vtx_BS;
       float p0minus_VAJHU, Dgg10_VAMCFM, pg1g4_VAJHU;
       float p0plus_VAJHU, p_GG_SIG_ghg2_1_ghz1prime2_1E4_JHUGen, p_GG_SIG_ghg2_1_ghza1prime2_1E4_JHUGen, p_GG_SIG_ghg2_1_ghz1_1_ghza1prime2_1E4_JHUGen, p_GG_SIG_ghg2_1_ghz1_1_ghz1prime2_1E4_JHUGen, p_GG_SIG_ghg2_1_ghz1_1_ghz2_1_JHUGen, pDL1_VAJHU, pD_L1Zgint; //, p0plus_VAJHU;
       float getDg4Constant(float ZZMass);
       float getDg2Constant(float ZZMass);
       float getDL1Constant(float ZZMass);
-      float getDL1ZgsConstant(float ZZMass);
+      float getDL1ZgsConstant(float ZZMass); 
 
-      int cut4e, cut4mu, cut2e2mu, cutZZ4e, cutZZ4mu, cutZZ2e2mu, cutm4l4e, cutm4l4mu, cutm4l2e2mu, cutghost2e2mu, cutQCD2e2mu, cutLepPt2e2mu, cutghost4e, cutQCD4e, cutLepPt4e, cutghost4mu, cutQCD4mu, cutLepPt4mu;
-      float pTL1, etaL1, phiL1, massL1, pTL2, etaL2, phiL2, massL2, pTL3, etaL3, phiL3, massL3, pTL4, etaL4, phiL4, massL4;
       float pTj1, etaj1, phij1, mj1, pTj2, etaj2, phij2, mj2;
+      float pTL1, etaL1, phiL1, massL1;
+      float pTL2, etaL2, phiL2, massL2;
+      float pTL3, etaL3, phiL3, massL3;
+      float pTL4, etaL4, phiL4, massL4;
 
-      
+
       
     private:
       std::vector<float> Electron_pt,Electron_phi,Electron_eta,Electron_mass,Electron_dxy,Electron_dz,Electron_sip3d;
       std::vector<float> Electron_pfRelIso03_all;
-      std::vector<bool> Electron_mvaFall17V2Iso_WP80,Electron_mvaFall17V2Iso_WP90,Electron_mvaFall17V2Iso_WPL;
-      std::vector<bool> Electron_mvaIso_WP80,Electron_mvaIso_WP90;
+      std::vector<float> Electron_deltaEtaSC,Electron_mvaHZZIso;
+      std::vector<bool> Electron_mvaIso_WPHZZ;
       std::vector<int> Electron_pdgId,Electron_genPartIdx;
 
       std::vector<float> Jet_pt,Jet_phi,Jet_eta,Jet_mass,Jet_btagDeepC,Jet_btagDeepFlavB,Jet_btagPNetB,Jet_btagRobustParTAK4B;
@@ -387,13 +439,12 @@ class H4LTools {
       std::vector<bool> Muon_looseId,Muon_mediumId,Muon_tightId;
       std::vector<unsigned char> Muon_mvaLowPtId,Muon_mvaId,Muon_mvaLowPt;
 
-      std::vector<float> FsrPhoton_dROverEt2,FsrPhoton_phi,FsrPhoton_pt,FsrPhoton_relIso03,FsrPhoton_eta,FsrPhoton_muonIdx,FsrPhoton_electronIdx;
-      
+      std::vector<float> FsrPhoton_dROverEt2, FsrPhoton_phi, FsrPhoton_pt, FsrPhoton_relIso03, FsrPhoton_eta, FsrPhoton_muonIdx, FsrPhoton_electronIdx;
+
       std::vector<float> GenPart_pt;
       
-      
       unsigned nElectron,nMuon,nJet,nGenPart,nFsrPhoton,nGenJet;
-
+      int nanoVersion = 12;
 
 
 };
@@ -439,7 +490,21 @@ H4LTools::H4LTools(int year, bool isMC_){
   cutm4l4e = 0;
   cutm4l4mu = 0;
 
+  passTwoTightLeps = 0;
+  passZCand = 0;
+  passTwoGoodJets = 0;
+  passDijet = 0;
+  passFinal = 0;
+
+  passAtLeastTwoRawJets = 0;
+  passAtLeastTwoPtEtaJets = 0;
+  passAtLeastTwoJetIdJets = 0;
+  passAtLeastTwoPuIdJets = 0;
   
+  nRawJetsThisEvent = 0;
+  nPtEtaJetsThisEvent = 0;
+  nJetIdJetsThisEvent = 0;
+  nPuIdJetsThisEvent = 0;
 }
 #endif
 

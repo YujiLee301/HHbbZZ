@@ -79,3 +79,10 @@ keep PV*
 #keep FatJet_*
 #keep Jet_*
 #keep Muon*
+keep invjj
+keep mass4e
+keep mass4mu
+keep mass2e2mu
+#
+#    check 2l2j
+keep eventPass*

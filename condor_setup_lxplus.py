@@ -17,6 +17,7 @@ def main(args):
     use_custom_eos = args.use_custom_eos
     use_custom_eos_cmd = args.use_custom_eos_cmd
     InputFileFromWhereReadDASNames = args.input_file
+    analysisMode = args.mode
     EOS_Output_path = args.eos_output_path
     if EOS_Output_path == "":
         # Get the username and its initial and set the path as /eos/user/<UserInitials>/<UserName>/nanoAOD_ntuples
@@ -160,7 +161,7 @@ def main(args):
     outScript.write("\n"+'cat post_proc.py');
     outScript.write("\n"+'echo "..."');
     outScript.write("\n"+'echo "========================================="');
-    outScript.write("\n"+command + " --entriesToRun 0  --inputFile ${1} ");
+    outScript.write("\n"+command + " --entriesToRun 0 --inputFile ${1} --mode " + analysisMode);
     outScript.write("\n"+'echo "====> List root files : " ');
     outScript.write("\n"+'ls *.root');
     outScript.write("\n"+'echo "====> copying *.root file to stores area..." ');
@@ -183,9 +184,9 @@ def main(args):
 
     print("\n#===> Set Proxy Using:")
     print("voms-proxy-init --voms cms --valid 168:00")
-    print("\n# It is assumed that the proxy is created in file: /tmp/x509up_u83403. Update this in below two lines:")
-    print("cp /tmp/x509up_u83403 ~/")
-    print("export X509_USER_PROXY=~/x509up_u83403")
+    print("\n# It is assumed that the proxy is created in file: /tmp/x509up_u177472. Update this in below two lines:")
+    print("cp /tmp/x509up_u177472 ~/")
+    print("export X509_USER_PROXY=~/x509up_u177472")
     print("\n#Submit jobs:")
     print(("condor_submit "+condor_file_name+".jdl"))
     #os.system("condor_submit "+condor_file_name+".jdl")
@@ -221,7 +222,9 @@ if __name__ == "__main__":
 
     parser.add_argument("--post_proc", default="post_proc.py", help="Post process script to run.")
     parser.add_argument("--transfer_input_files", default="keep_and_drop.txt", help="Files to be transferred as input.")
-
+    parser.add_argument("--mode", default="4l2j", choices=["4l", "2l2j", "4l2j"],
+                        help="Analysis mode passed to post_proc.py")
+    
     args = parser.parse_args()
     main(args)
 #condor_setup_lxplus.py

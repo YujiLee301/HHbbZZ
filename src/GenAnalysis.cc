@@ -2,30 +2,138 @@
 #include <TLorentzVector.h>
 #include <TRandom3.h>
 #include <vector>
+
 int GenAnalysis::motherID(int Genidx){
-    int ID=0;
-    while(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]]!=2212 || abs(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]])!=21 || abs(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]])>6){
-        if(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]]!=GenPart_pdgId[Genidx]){
-            ID=GenPart_pdgId[GenPart_genPartIdxMother[Genidx]]; return ID;
+    if (Genidx < 0 || Genidx >= (int)GenPart_pdgId.size()) return 0;
+
+    int cur = Genidx;
+    int guard = 0;
+
+    while (guard < 200) {
+        int midx = GenPart_genPartIdxMother[cur];
+        if (midx < 0 || midx >= (int)GenPart_pdgId.size()) return 0;
+
+        int mpdg = GenPart_pdgId[midx];
+
+        // stop at beam / parton / quark
+        if (mpdg == 2212 || abs(mpdg) == 21 || abs(mpdg) <= 6) {
+            return 2212;
         }
-        else{
-            Genidx=GenPart_genPartIdxMother[Genidx];
+
+        if (mpdg != GenPart_pdgId[cur]) {
+            return mpdg;
         }
+
+        cur = midx;
+        guard++;
     }
-    return 2212;
+
+    return 0;
 }
+
 int GenAnalysis::mothermotherID(int Genidx){
-    int ID=0;
-    while(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]]!=2212 || abs(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]])!=21 || abs(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]])>6){
-        if(GenPart_pdgId[GenPart_genPartIdxMother[Genidx]]!=GenPart_pdgId[Genidx] && GenPart_pdgId[GenPart_genPartIdxMother[GenPart_genPartIdxMother[Genidx]]]!=GenPart_pdgId[Genidx] && GenPart_pdgId[GenPart_genPartIdxMother[GenPart_genPartIdxMother[Genidx]]]!=GenPart_pdgId[GenPart_genPartIdxMother[Genidx]] ){
-            ID=GenPart_pdgId[GenPart_genPartIdxMother[GenPart_genPartIdxMother[Genidx]]]; return ID;
+    if (Genidx < 0 || Genidx >= (int)GenPart_pdgId.size()) return 0;
+
+    int cur = Genidx;
+    int guard = 0;
+
+    while (guard < 200) {
+        int midx = GenPart_genPartIdxMother[cur];
+        if (midx < 0 || midx >= (int)GenPart_pdgId.size()) return 0;
+
+        int mpdg = GenPart_pdgId[midx];
+
+        if (mpdg == 2212 || abs(mpdg) == 21 || abs(mpdg) <= 6) {
+            return 2212;
         }
-        else{
-            Genidx=GenPart_genPartIdxMother[Genidx];
+
+        if (mpdg != GenPart_pdgId[cur]) {
+            int mmidx = GenPart_genPartIdxMother[midx];
+            if (mmidx < 0 || mmidx >= (int)GenPart_pdgId.size()) return 0;
+
+            int mmpdg = GenPart_pdgId[mmidx];
+
+            if (mmpdg == 2212 || abs(mmpdg) == 21 || abs(mmpdg) <= 6) {
+                return 2212;
+            }
+
+            if (mmpdg == mpdg) {
+                cur = midx;
+                guard++;
+                continue;
+            }
+
+            return mmpdg;
         }
+
+        cur = midx;
+        guard++;
     }
-    return 2212;
+
+    return 0;
 }
+
+int GenAnalysis::mothermothermotherID(int Genidx){
+    if (Genidx < 0 || Genidx >= (int)GenPart_pdgId.size()) return 0;
+
+    int cur = Genidx;
+    int guard = 0;
+
+    while (guard < 200) {
+        int midx = GenPart_genPartIdxMother[cur];
+        if (midx < 0 || midx >= (int)GenPart_pdgId.size()) return 0;
+
+        int mpdg = GenPart_pdgId[midx];
+
+        // stop at beam / parton / quark
+        if (mpdg == 2212 || abs(mpdg) == 21 || abs(mpdg) <= 6) {
+            return 2212;
+        }
+
+        // first different mother found
+        if (mpdg != GenPart_pdgId[cur]) {
+            int mmidx = GenPart_genPartIdxMother[midx];
+            if (mmidx < 0 || mmidx >= (int)GenPart_pdgId.size()) return 0;
+
+            int mmpdg = GenPart_pdgId[mmidx];
+
+            if (mmpdg == 2212 || abs(mmpdg) == 21 || abs(mmpdg) <= 6) {
+                return 2212;
+            }
+
+            // if second level still same as first, keep climbing
+            if (mmpdg == mpdg) {
+                cur = midx;
+                guard++;
+                continue;
+            }
+
+            int mmmidx = GenPart_genPartIdxMother[mmidx];
+            if (mmmidx < 0 || mmmidx >= (int)GenPart_pdgId.size()) return 0;
+
+            int mmmpdg = GenPart_pdgId[mmmidx];
+
+            if (mmmpdg == 2212 || abs(mmmpdg) == 21 || abs(mmmpdg) <= 6) {
+                return 2212;
+            }
+
+            // if third level still same as second, keep climbing
+            if (mmmpdg == mmpdg) {
+                cur = mmidx;
+                guard++;
+                continue;
+            }
+
+            return mmmpdg;
+        }
+
+        cur = midx;
+        guard++;
+    }
+
+    return 0;
+}
+
 void GenAnalysis::SetGenVariables(){
     TLorentzVector GENmom1, GENmom2;
     TLorentzVector LS3_Z1_1, LS3_Z1_2, LS3_Z2_1, LS3_Z2_2, GENgoodj1,GENgoodj2,GEN_H1Vec,GEN_H2Vec;
@@ -53,7 +161,21 @@ void GenAnalysis::SetGenVariables(){
             if (!(GenPart_status[genpidx]==1 || abs(GenPart_pdgId[genpidx])==15)) { //not stable and not tau
                 continue;
             }
-            if (!(abs(motherID(genpidx))==23 || abs(motherID(genpidx))==443 || abs(motherID(genpidx))==553 || abs(motherID(genpidx))==24 || abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331 ) ) {
+            int mom    = abs(motherID(genpidx));
+            int mom2 = abs(mothermotherID(genpidx));
+            int mom3   = abs(mothermothermotherID(genpidx));
+
+            // l <- Z <- H
+            bool directFromHZZ = (mom == 23 && mom2 == 25);
+
+            // l <- X <- Z <- H
+            bool indirectFromHZZ = (
+                (mom == 111 || mom == 221 || mom == 331 || mom == 443 || mom == 553) &&
+                (mom2 == 23) &&
+                (mom3 == 25)
+            );
+
+            if (!(directFromHZZ || indirectFromHZZ)) {
                 continue;
             }
             //if ((abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331)&&(abs(mothermotherID(genpidx))==23)){
@@ -111,6 +233,8 @@ void GenAnalysis::SetGenVariables(){
             GENlep_phi.push_back( lep_dressed.Phi() );
             GENlep_mass.push_back( lep_dressed.M() );
             GENlep_MomId.push_back(motherID(genpidx));
+            GENlep_MomMomId.push_back(mothermotherID(genpidx));
+            GENlep_MomMomMomId.push_back(mothermothermotherID(genpidx));
 
             TLorentzVector thisLep;
             thisLep.SetPtEtaPhiM(lep_dressed.Pt(),lep_dressed.Eta(),lep_dressed.Phi(),lep_dressed.M());
@@ -150,6 +274,19 @@ void GenAnalysis::SetGenVariables(){
             nVECZ++;
         }
     }
+
+    //======= Calculate k-factor variables =======
+    // Store initial state quark type for EWK corrections
+    if (counter_initParticle >= 2) {
+        // Take the first incoming parton as quark type (should be quark for qqZZ)
+        if (abs(GENmom1_id) >= 1 && abs(GENmom1_id) <= 5) {
+            GEN_quark_type = abs(GENmom1_id);  // 1=d, 2=u, 3=s, 4=c, 5=b
+        } else if (abs(GENmom2_id) >= 1 && abs(GENmom2_id) <= 5) {
+            GEN_quark_type = abs(GENmom2_id);
+        }
+    }
+    //====================================================
+
     if (GENlep_pt.size()>=4) {
 
         unsigned int L1_nocuts=99; unsigned int L2_nocuts=99; unsigned int L3_nocuts=99; unsigned int L4_nocuts=99;
@@ -162,12 +299,14 @@ void GenAnalysis::SetGenVariables(){
             Z2_2.SetPtEtaPhiM(GENlep_pt[L4_nocuts],GENlep_eta[L4_nocuts],GENlep_phi[L4_nocuts],GENlep_mass[L4_nocuts]);
             GENmassZZ = (Z1_1+Z1_2+Z2_1+Z2_2).M();
             GENpTZZ = (Z1_1+Z1_2+Z2_1+Z2_2).Pt();
-            int genfs;
-            if (abs(GENlep_id[L1_nocuts])==abs(GENlep_id[L3_nocuts])) genfs=1;
-            else genfs=2;
+            if (abs(GENlep_id[L1_nocuts])==abs(GENlep_id[L3_nocuts])) {
+                GEN_final_state = 1;  // 4e or 4mu
+            } else {
+                GEN_final_state = 2;  // 2e2mu
+            }
         }
-
     }
+
     /////// DO THE FIDUCIAL VOLUME CALCULATION //////////////
     passedFiducialSelection=false;
     int nFiducialLeptons = 0;
@@ -176,23 +315,35 @@ void GenAnalysis::SetGenVariables(){
 
     int nGENe, nGENmu;
     nGENe=0; nGENmu=0;
+
     for (unsigned int i=0; i<GENlep_id.size(); ++i) {
         TLorentzVector thisLep;
         thisLep.SetPtEtaPhiM(GENlep_pt[i],GENlep_eta[i],GENlep_phi[i],GENlep_mass[i]);
 
-        if ( ( (abs(GENlep_id[i]) == 13 && thisLep.Pt() > 5.0 && abs(thisLep.Eta()) < 2.4)
-            || (abs(GENlep_id[i]) == 11 && thisLep.Pt() > 7.0 && abs(thisLep.Eta()) < 2.5) )
+        if ( ( (abs(GENlep_id[i]) == 13 && thisLep.Pt() > 3.0 && abs(thisLep.Eta()) < 2.4)
+            || (abs(GENlep_id[i]) == 11 && thisLep.Pt() > 5.0 && abs(thisLep.Eta()) < 2.5) )
             && GENlep_RelIso[i]<((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu) ) {
             nFiducialLeptons++;
             if (thisLep.Pt()>leadingPtCut) nFiducialPtLead++;
             if (thisLep.Pt()>subleadingPtCut) nFiducialPtSublead++;
         }
-        if (abs(GENlep_id[i]) == 13) nGENmu++;
-        if (abs(GENlep_id[i]) == 11) nGENe++;
+
+        if (abs(GENlep_id[i]) == 11) {
+            nGENe++;
+        }
+    
+        if (abs(GENlep_id[i]) == 13) {
+            nGENmu++;
+        }
     }
+
+
+
+
     if(nGENmu>3) {flag4mu++;nGEN4mu++;}
     if(nGENe>3) {flag4e++;nGEN4e++;}
-    if((nGENe>1)&&(nGENmu>1)) {flag2e2mu++;nGEN2e2mu++;}
+    if((nGENe>1)&&(nGENmu>1)) {flag2e2mu++;nGEN2e2mu++;} 
+
     if (nFiducialLeptons>=4 && nFiducialPtLead>=1 && nFiducialPtSublead>=2 ){
         // START FIDUCIAL EVENT TOPOLOGY CUTS
         unsigned int L1=99; unsigned int L2=99; unsigned int L3=99; unsigned int L4=99;
@@ -250,6 +401,75 @@ void GenAnalysis::SetGenVariables(){
             GENrapidity4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).Rapidity();
             GENmassZ1 = (LS3_Z1_1+LS3_Z1_2).M();
             GENmassZ2 = (LS3_Z2_1+LS3_Z2_2).M();
+
+            //======= Calculate s_hat and t_hat for EWK =======
+            TLorentzVector ZZ = LS3_Z1_1 + LS3_Z1_2 + LS3_Z2_1 + LS3_Z2_2;
+            GEN_sqrt_s_hat = ZZ.M();
+            
+            // Calculate dPhi between Z1 and Z2 for QCD k-factors
+            TLorentzVector Z1 = LS3_Z1_1 + LS3_Z1_2;
+            TLorentzVector Z2 = LS3_Z2_1 + LS3_Z2_2;
+            GEN_dPhiZZ = abs(Z1.DeltaPhi(Z2));
+            
+            // Calculate t_hat 
+            // Only for on-shell ZZ
+            if (GEN_sqrt_s_hat > 2 * Zmass) {
+                double s_hat = GEN_sqrt_s_hat * GEN_sqrt_s_hat;
+                
+                // Beam energy (13 TeV total, so 6500 GeV per beam)
+                double energy = 6500.0;
+                
+                // Initial state parton momenta (approximate along z-axis)
+                // p1: proton direction (+z), p2: anti-proton direction (-z)
+                // Use actual initial state rapidity if available, otherwise assume head-on
+                double pz1 = energy;
+                double pz2 = -energy;
+                
+                // If we have initial state info, use it for better approximation
+                if (GENmom1.P() > 0 && GENmom2.P() > 0) {
+                    // Use actual initial state directions
+                    pz1 = GENmom1.Pz();
+                    pz2 = GENmom2.Pz();
+                }
+                
+                TLorentzVector p1, p2;
+                p1.SetXYZT(0., 0., pz1, fabs(pz1));  // massless approximation
+                p2.SetXYZT(0., 0., pz2, fabs(pz2));
+                
+                // Boost to CM frame
+                TVector3 boost_vec = ZZ.BoostVector();
+                TLorentzVector Z1_cm = Z1;
+                TLorentzVector p1_cm = p1;
+                TLorentzVector p2_cm = p2;
+                
+                Z1_cm.Boost(-boost_vec);
+                p1_cm.Boost(-boost_vec);
+                p2_cm.Boost(-boost_vec);
+                
+                // Unitary vectors
+                TVector3 z1_dir = Z1_cm.Vect().Unit();
+                TVector3 p1_dir = p1_cm.Vect().Unit();
+                TVector3 p2_dir = p2_cm.Vect().Unit();
+                
+                // Effective beam axis (from p1 - p2 direction)
+                TVector3 diff_p = p1_dir - p2_dir;
+                TVector3 eff_beam_axis = diff_p.Unit();
+                
+                // cos(theta) = angle between Z1 and effective beam axis
+                double cos_theta = eff_beam_axis.Dot(z1_dir);
+                
+                // Calculate t_hat
+                double m_z2 = Zmass * Zmass;
+                double discriminant = 0.25 * s_hat * s_hat - m_z2 * s_hat;
+                
+                if (discriminant >= 0) {
+                    GEN_t_hat = m_z2 - 0.5 * s_hat + cos_theta * sqrt(discriminant);
+                } else {
+                    // Off-shell or numerical issue, set to safe value
+                    GEN_t_hat = m_z2 - 0.5 * s_hat;
+                }
+            }
+            //=========================================================
 
             int tmpIdL1,tmpIdL2,tmpIdL3,tmpIdL4;
             TLorentzVector GENL11P4, GENL12P4, GENL21P4, GENL22P4;
@@ -343,16 +563,11 @@ void GenAnalysis::SetGenVariables(){
             }// loop over gen jets
             passedFiducialSelection = false;
 
-            int j1 = (GEN_goodJetsidx.size() > 0) ? GEN_goodJetsidx[0] : -1;
-            int j2 = (GEN_goodJetsidx.size() > 1) ? GEN_goodJetsidx[1] : -1;
-            int j3 = (GEN_goodJetsidx.size() > 2) ? GEN_goodJetsidx[2] : -1;
-            int j4 = (GEN_goodJetsidx.size() > 3) ? GEN_goodJetsidx[3] : -1;
-
             b_jets.clear();
-            
-            for (int j : {j1, j2, j3, j4}) {
-                if (j >= 0 && GENjet_hadronFlavour[j] == 5) {
-                        b_jets.push_back(j);
+
+            for (unsigned int igj = 0; igj < GENjet_hadronFlavour.size(); ++igj) {
+                if (GENjet_hadronFlavour[igj] == 5) {
+                    b_jets.push_back(igj);
                 }
             }
 
@@ -375,27 +590,7 @@ void GenAnalysis::SetGenVariables(){
             GEN_H2Vec = GENgoodj1 + GENgoodj2 ;
             GENmass2j = GEN_H2Vec.M();
             passedFiducialSelection = true;            
-            //std::cout << "[DEBUG] b_jets.size() = " << b_jets.size() << std::endl;
-            //std::cout << "[DEBUG] GEN_goodJetsidx = ";
-            //for (size_t i = 0; i < GEN_goodJetsidx.size(); ++i) {
-            //    std::cout << GEN_goodJetsidx[i] << " ";
-            //}
-            //std::cout << std::endl;
 
-            //std::cout << "[DEBUG] b_jets = ";
-            //for (size_t i = 0; i < b_jets.size(); ++i) {
-            //    std::cout << b_jets[i] << " ";
-            //}
-            //std::cout << std::endl;
-
-            //std::cout << "[DEBUG] h1 = " << h1
-            //    << ", h2 = " << h2
-            //    << ", total GEN jets = " << GENjet_pt.size()
-            //    << std::endl;
-
-            //std::cout << "[DEBUG] GENjet_Hindex[0] = " << GENjet_Hindex[0]
-            //    << ", GENjet_Hindex[1] = " << GENjet_Hindex[1]
-            //    << std::endl;
         }
     }
     return;
@@ -412,7 +607,7 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
     unsigned int N = GENlep_pt.size();
 
     for(unsigned int i=0; i<N; i++){
-        for(unsigned int j=i+1; j<=N; j++){
+        for(unsigned int j=i+1; j<N; j++){
 
 
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;
@@ -423,12 +618,12 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
 
 
             if (makeCuts) {
-                if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
-                if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
+                if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 3.0 || abs(li.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.5)) continue;
                 if ( GENlep_RelIso[i]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
 
-                if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
-                if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
+                if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 3.0 || abs(lj.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.5)) continue;
                 if ( GENlep_RelIso[j]>((abs(GENlep_id[j])==11)?genIsoCutEl:genIsoCutMu)) continue;
             }
 
@@ -456,7 +651,7 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
     //cout<<"findZ2"<<endl;
     for(unsigned int i=0; i<N; i++){
         if(i==L1 || i==L2) continue; // can not be the lep from Z1
-        for(unsigned int j=i+1; j<=N; j++){
+        for(unsigned int j=i+1; j<N; j++){
             if(j==L1 || j==L2) continue; // can not be the lep from Z1
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;
 
@@ -466,12 +661,12 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
             TLorentzVector Z2 = li+lj;
 
             if (makeCuts) {
-                if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
-                if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
+                if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 3.0 || abs(li.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.5)) continue;
                 if ( GENlep_RelIso[i]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
 
-                if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
-                if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
+                if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 3.0 || abs(lj.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.5)) continue;
                 if ( GENlep_RelIso[j]>((abs(GENlep_id[j])==11)?genIsoCutEl:genIsoCutMu)) continue;
             }
 

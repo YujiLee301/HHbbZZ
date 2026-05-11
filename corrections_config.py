@@ -15,6 +15,7 @@ from PhysicsTools.NATModules.modules.jetCorr import jetJERC as jetJERC_natlib
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.muonScaleResProducer import (
     muonScaleRes2016, muonScaleRes2017, muonScaleRes2018
 )
+from kFactorProducer import create_kfactor_producer
 
 
 def get_electron_sf_2022(data_tag, isMC):
@@ -186,7 +187,7 @@ def get_electron_scale_res_2018(isMC, overwritePt):
     json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2018_UL/electronSS.json.gz"
     scaleKey = "EGMScale_Compound_Ele_2018"
     smearKey = "EGMSmearAndSyst_Ele_2018"
-    return eleScaleRes_natlib(json_path, scaleKey, smearKey, isMC, overwritePt)
+    return eleScaleRes_natlib(json_path, scaleKey, smearKey, overwritePt)
 
 
 def get_electron_sf_2017(isMC):
@@ -218,7 +219,7 @@ def get_electron_scale_res_2017(isMC, overwritePt):
     json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2017_UL/electronSS.json.gz"
     scaleKey = "EGMScale_Compound_Ele_2017"
     smearKey = "EGMSmearAndSyst_Ele_2017"
-    return eleScaleRes_natlib(json_path, scaleKey, smearKey, isMC, overwritePt)
+    return eleScaleRes_natlib(json_path, scaleKey, smearKey, overwritePt)
 
 
 def get_electron_sf_2016(first_file, isMC):
@@ -264,7 +265,7 @@ def get_electron_scale_res_2016(first_file, isMC, overwritePt):
         scaleKey = "EGMScale_Compound_Ele_2016postVFP"
         smearKey = "EGMSmearAndSyst_Ele_2016postVFP"
     
-    return eleScaleRes_natlib(json_path, scaleKey, smearKey, isMC, overwritePt)
+    return eleScaleRes_natlib(json_path, scaleKey, smearKey, overwritePt)
 
 
 def get_pu_weight_2022(data_tag):
@@ -373,10 +374,10 @@ def get_jet_correction_2022(data_tag, isMC):
         # Data - JER are not applied to data
         if "pre_EE" in data_tag:
             folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/latest"
-            L1Key = "Summer22_22Sep2023_RunCD_V3_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer22_22Sep2023_RunCD_V3_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer22_22Sep2023_RunCD_V3_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer22_22Sep2023_RunCD_V3_DATA_L2L3Residual_AK4PFPuppi"
+            L1Key = "Summer22_22Sep2023_V3_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer22_22Sep2023_V3_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer22_22Sep2023_V3_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer22_22Sep2023_V3_DATA_L2L3Residual_AK4PFPuppi"
             scaleTotalKey = None
             scaleKeyRegrouped11 = None
             smearKey = None
@@ -385,10 +386,10 @@ def get_jet_correction_2022(data_tag, isMC):
         else:
             # For post_EE, would need to handle different runs (E, F, G) - using E as default
             folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/latest"
-            L1Key = "Summer22EE_22Sep2023_RunE_V3_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer22EE_22Sep2023_RunE_V3_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer22EE_22Sep2023_RunE_V3_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer22EE_22Sep2023_RunE_V3_DATA_L2L3Residual_AK4PFPuppi"
+            L1Key = "Summer22EE_22Sep2023_V3_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer22EE_22Sep2023_V3_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer22EE_22Sep2023_V3_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer22EE_22Sep2023_V3_DATA_L2L3Residual_AK4PFPuppi"
             scaleTotalKey = None
             scaleKeyRegrouped11 = None
             smearKey = None
@@ -401,13 +402,12 @@ def get_jet_correction_2022(data_tag, isMC):
     # Configuration flags
     overwritePt = True
     usePhiDependentJEC = False  # False for 2022
-    useRunDependentJEC = False  # False for 2022
+    useRunDependentJEC = (not isMC)  # True for data, False for MC
     useJesSplittingScheme11 = False
     scaleKey = scaleKeyRegrouped11 if useJesSplittingScheme11 else scaleTotalKey
     
-    # Call jetJERC following reference pattern (positional arguments)
     return jetJERC_natlib(
-        json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
+        2022, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
         scaleKey, smearKey, JERKey, JERsfKey,
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
@@ -463,10 +463,10 @@ def get_jet_correction_2023(data_tag, isMC):
         # Data - JER are not applied to data
         if "pre_BPix" in data_tag:
             folderKey = "Run3-23CSep23-Summer23-NanoAODv12/latest"
-            L1Key = "Summer23Prompt23_V2_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer23Prompt23_V2_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer23Prompt23_V2_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer23Prompt23_V2_DATA_L2L3Residual_AK4PFPuppi"
+            L1Key = "Summer23Prompt23_V3_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer23Prompt23_V3_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer23Prompt23_V3_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer23Prompt23_V3_DATA_L2L3Residual_AK4PFPuppi"
             scaleTotalKey = None
             scaleKeyRegrouped11 = None
             smearKey = None
@@ -496,7 +496,7 @@ def get_jet_correction_2023(data_tag, isMC):
     
     # Call jetJERC following reference pattern (positional arguments)
     return jetJERC_natlib(
-        json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
+        2023, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
         scaleKey, smearKey, JERKey, JERsfKey,
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
@@ -560,11 +560,29 @@ def get_jet_correction_2024(data_tag, isMC):
     
     # Call jetJERC following reference pattern (positional arguments)
     return jetJERC_natlib(
-        json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
+        2024, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
         scaleKey, smearKey, JERKey, JERsfKey,
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 
+def get_kfactor_module(year, file_path, kfactor_dir="/eos/user/l/liuc/kFactor"):
+    """
+    Get kFactor correction module for ZZ samples.
+    Passes the full file path to kFactorProducer for robust sample identification.
+    """
+    
+    print(f"[corrections_config] Creating kFactorProducer for file: {file_path}")
+
+    path_lower = file_path.lower()
+    is_ggzz = "gluglutocontinto2z" in path_lower
+    is_qqzz = "zzto4l" in path_lower
+    
+    if is_ggzz or is_qqzz:
+        print(f"[corrections_config] Sample requires k-factors (ggZZ: {is_ggzz}, qqZZ: {is_qqzz})")
+        return create_kfactor_producer(year, file_path, kfactor_dir)
+    else:
+        print(f"[corrections_config] Sample does not require k-factors")
+        return None
 
 def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt):
     """
@@ -581,6 +599,12 @@ def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt):
         List of correction modules
     """
     modules = []
+    
+    # Add kFactor for qqZZ and ggZZ MC samples 
+    if isMC:
+        kfactor_module = get_kfactor_module(year, first_file)
+        if kfactor_module is not None:
+            modules.append(kfactor_module)
     
     if year == 2022:
         modules.append(get_electron_sf_2022(data_tag, isMC))
