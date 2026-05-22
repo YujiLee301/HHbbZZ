@@ -570,13 +570,16 @@ def get_kfactor_module(year, file_path, kfactor_dir="/eos/user/l/liuc/kFactor"):
     Get kFactor correction module for ZZ samples.
     Passes the full file path to kFactorProducer for robust sample identification.
     """
-    
     print(f"[corrections_config] Creating kFactorProducer for file: {file_path}")
 
     path_lower = file_path.lower()
-    is_ggzz = "gluglutocontinto2z" in path_lower
-    is_qqzz = "zzto4l" in path_lower
-    
+    sample_name = os.path.basename(path_lower)
+    if sample_name.endswith(".root"):
+        sample_name = sample_name[:-5]
+
+    is_ggzz = sample_name.startswith("gluglutocontinto2z")
+    is_qqzz = sample_name.startswith("zzto4l")
+
     if is_ggzz or is_qqzz:
         print(f"[corrections_config] Sample requires k-factors (ggZZ: {is_ggzz}, qqZZ: {is_qqzz})")
         return create_kfactor_producer(year, file_path, kfactor_dir)

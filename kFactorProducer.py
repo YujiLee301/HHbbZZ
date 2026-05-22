@@ -25,10 +25,11 @@ class kFactorProducer(Module):
         print(f"{'='*60}\n")
         
         full_path_lower = sample_path.lower()
+        sample_name = os.path.basename(full_path_lower)
         
         # Determine sample type
-        self.is_ggzz = "gluglutocontinto2z" in full_path_lower
-        self.is_qqzz = "zzto4l" in full_path_lower
+        self.is_ggzz = sample_name.startswith("gluglutocontinto2z")
+        self.is_qqzz = sample_name.startswith("zzto4l")
         self.apply_kfactor = self.is_ggzz or self.is_qqzz
         
         print(f"[kFactorProducer] is_ggZZ: {self.is_ggzz}")

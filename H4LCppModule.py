@@ -429,7 +429,6 @@ class HZZAnalysisCppProducer(Module):
             deltaEtaSC = xe.deltaEtaSC if hasDeltaEtaSC else 0.
             mvaHZZIso = xe.mvaHZZIso if hasHZZ else -999.
             mvaIso_WPHZZ = bool(xe.mvaIso_WPHZZ) if hasWPHZZ else False
-            
 
             self.worker.SetElectrons(
                 xe.pt, xe.eta, xe.phi, xe.mass, xe.dxy, xe.dz, xe.sip3d,
@@ -452,6 +451,13 @@ class HZZAnalysisCppProducer(Module):
             mvaLowPtId = int(xm.mvaLowPtId) if hasLowPtId else 0
             mvaId = int(xm.mvaId) if hasMvaId else 0
             mvaLowPt = int(xm.mvaLowPt) if hasLowPt else 0
+            
+            if mvaLowPtId < 0:
+                mvaLowPtId = 0
+            if mvaId < 0:
+                mvaId = 0
+            if mvaLowPt < 0:
+                mvaLowPt = 0
 
             self.worker.SetMuons(
                 xm.pt, xm.eta, xm.phi, xm.mass, xm.isGlobal, xm.isTracker,

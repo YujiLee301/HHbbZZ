@@ -465,7 +465,7 @@ void H4LTools::LeptonSelection(){
     Electronindex = bestEle;
     Muonindex = bestMu;
     AllEid = pass_Ele_Id(nanoVersion);
-    AllMuid = pass_Mu_Id("Run3","MVA-Based","tight");
+    AllMuid = pass_Mu_Id("Run3","MVA-Based","loose");
     for (unsigned int iuj=0;iuj<step1Ele.size();iuj++){
         if(AllEid[step1Ele[iuj]]) tighteleforjetidx.push_back(step1Ele[iuj]);
     }
