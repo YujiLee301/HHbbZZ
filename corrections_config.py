@@ -12,6 +12,7 @@ from PhysicsTools.NATModules.modules.muonScaleRes import muonScaleRes as muonSca
 from PhysicsTools.NATModules.modules.puWeightProducer import puWeightProducer as puWeightProducer_natlib
 from PhysicsTools.NATModules.modules.jetVetoMap import jetVMAP as jetVMAP_natlib
 from PhysicsTools.NATModules.modules.jetCorr import jetJERC as jetJERC_natlib
+from PhysicsTools.NATModules.modules.jetBtag import jetBtag as jetBtag_natlib
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.muonScaleResProducer import (
     muonScaleRes2016, muonScaleRes2017, muonScaleRes2018
 )
@@ -565,6 +566,56 @@ def get_jet_correction_2024(data_tag, isMC):
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 
+
+_btag_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "btag")
+
+# Tagger settings for RobustParTAK4B Medium WP (Run 3 only).
+# NOTE: Efficiency JSON files (json_eff) are analysis-specific and must be
+# generated from your MC before running. Place them in data/btag/ with the
+# names expected below. See NATModules test/example_jetBtag.py for the format.
+_RPT_TAGGER = "robustParticleTransformer"  # key used in BTV correctionlib JSON
+_RPT_TAGGER_NAME = "btagRobustParTAK4B"    # NanoAOD branch name on Jet
+_RPT_WP = "M"
+
+
+def get_btag_sf_2022(data_tag, isMC):
+    """Get b-tagging SF correction for 2022 (RobustParTAK4B, Medium WP)."""
+    if "pre_EE" in data_tag:
+        json_SF = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2022_Summer22/btagging.json.gz"
+        json_eff = os.path.join(_btag_data_dir, "2022_Summer22_RPT_M_eff.json.gz")
+    else:
+        json_SF = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2022_Summer22EE/btagging.json.gz"
+        json_eff = os.path.join(_btag_data_dir, "2022_Summer22EE_RPT_M_eff.json.gz")
+
+    return jetBtag_natlib(
+        is_mc=isMC,
+        tagger=_RPT_TAGGER,
+        tagger_name=_RPT_TAGGER_NAME,
+        WP=_RPT_WP,
+        json_SF=json_SF,
+        json_eff=json_eff,
+    )
+
+
+def get_btag_sf_2023(data_tag, isMC):
+    """Get b-tagging SF correction for 2023 (RobustParTAK4B, Medium WP)."""
+    if "pre_BPix" in data_tag:
+        json_SF = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2023_Summer23/btagging.json.gz"
+        json_eff = os.path.join(_btag_data_dir, "2023_Summer23_RPT_M_eff.json.gz")
+    else:
+        json_SF = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2023_Summer23BPix/btagging.json.gz"
+        json_eff = os.path.join(_btag_data_dir, "2023_Summer23BPix_RPT_M_eff.json.gz")
+
+    return jetBtag_natlib(
+        is_mc=isMC,
+        tagger=_RPT_TAGGER,
+        tagger_name=_RPT_TAGGER_NAME,
+        WP=_RPT_WP,
+        json_SF=json_SF,
+        json_eff=json_eff,
+    )
+
+
 def get_kfactor_module(year, file_path, kfactor_dir="/eos/user/l/liuc/kFactor"):
     """
     Get kFactor correction module for ZZ samples.
@@ -616,6 +667,7 @@ def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt):
         modules.append(get_electron_scale_res_2022(data_tag, isMC, overwritePt))
         modules.append(get_jet_veto_map_2022(data_tag))
         modules.append(get_jet_correction_2022(data_tag, isMC))
+        modules.append(get_btag_sf_2022(data_tag, isMC))
     
     elif year == 2023:
         modules.append(get_electron_sf_2023(data_tag, isMC))
@@ -624,7 +676,8 @@ def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt):
         modules.append(get_electron_scale_res_2023(data_tag, isMC, overwritePt))
         modules.append(get_jet_veto_map_2023(data_tag))
         modules.append(get_jet_correction_2023(data_tag, isMC))
-    
+        modules.append(get_btag_sf_2023(data_tag, isMC))
+
     elif year == 2024:
         # Note: 2024 corrections may need to be added for electron/muon SF and scale/res
         # For now, only jet corrections are implemented
