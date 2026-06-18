@@ -13,9 +13,17 @@ class kFactorProducer(Module):
     ggZZ: NNLO/LO
     """
     
-    def __init__(self, year, sample_path="", kfactor_dir="/data/kFactor"):
+    def __init__(self, year, sample_path="", kfactor_dir=None):
         self.year = year
         self.sample_path = sample_path
+        
+        if kfactor_dir is None:
+            cmssw_base = os.environ.get("CMSSW_BASE", "")
+            kfactor_dir = os.path.join(
+                cmssw_base,
+                "src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/kFactor"
+            )
+        
         self.kfactor_dir = kfactor_dir
         
         print(f"\n{'='*60}")
@@ -24,12 +32,17 @@ class kFactorProducer(Module):
         print(f"[kFactorProducer] Sample path: {sample_path}")
         print(f"{'='*60}\n")
         
-        full_path_lower = sample_path.lower()
-        sample_name = os.path.basename(full_path_lower)
+        print(f"[kFactorProducer] kfactor_dir: {self.kfactor_dir}")
+        print(f"[kFactorProducer] exists? {os.path.exists(self.kfactor_dir)}")
         
-        # Determine sample type
-        self.is_ggzz = sample_name.startswith("gluglutocontinto2z")
-        self.is_qqzz = sample_name.startswith("zzto4l")
+        full_path_lower = sample_path.lower().strip()
+
+        # ggZZ continuum
+        self.is_ggzz = "gluglutocontinto2z" in full_path_lower
+
+        # qqZZ background:
+        self.is_qqzz = ("zzto4l" in full_path_lower) and ("glugluhtozzto4l" not in full_path_lower)
+
         self.apply_kfactor = self.is_ggzz or self.is_qqzz
         
         print(f"[kFactorProducer] is_ggZZ: {self.is_ggzz}")
@@ -117,6 +130,11 @@ class kFactorProducer(Module):
                              "Kfactor_Collected_ggHZZ_2l2l_NNLO_NNPDF_NarrowWidth_13TeV.root")
         nlo_path = os.path.join(self.kfactor_dir,
                             "Kfactor_Collected_ggHZZ_2l2l_NLO_NNPDF_NarrowWidth_13TeV.root")
+    
+                
+        print(f"[ggZZ] nnlo_path = {nnlo_path}, exists = {os.path.exists(nnlo_path)}")
+        print(f"[ggZZ] nlo_path  = {nlo_path}, exists = {os.path.exists(nlo_path)}")
+        
     
         variations = ["Nominal", "PDFScaleDn", "PDFScaleUp", 
                   "QCDScaleDn", "QCDScaleUp", "AsDn", "AsUp",
@@ -597,7 +615,7 @@ class kFactorProducer(Module):
             pass
 
 
-def create_kfactor_producer(year, sample_path, kfactor_dir="/eos/user/l/liuc/kFactor"):
+def create_kfactor_producer(year, sample_path, kfactor_dir=None):
     """
     Factory function to create kFactorProducer with proper initialization.
     """

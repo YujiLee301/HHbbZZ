@@ -34,8 +34,10 @@ int GenAnalysis::motherID(int Genidx){
 int GenAnalysis::mothermotherID(int Genidx){
     if (Genidx < 0 || Genidx >= (int)GenPart_pdgId.size()) return 0;
 
+    // Step 1: find first non-self mother of Genidx
     int cur = Genidx;
     int guard = 0;
+    int momidx = -1;
 
     while (guard < 200) {
         int midx = GenPart_genPartIdxMother[cur];
@@ -48,86 +50,36 @@ int GenAnalysis::mothermotherID(int Genidx){
         }
 
         if (mpdg != GenPart_pdgId[cur]) {
-            int mmidx = GenPart_genPartIdxMother[midx];
-            if (mmidx < 0 || mmidx >= (int)GenPart_pdgId.size()) return 0;
-
-            int mmpdg = GenPart_pdgId[mmidx];
-
-            if (mmpdg == 2212 || abs(mmpdg) == 21 || abs(mmpdg) <= 6) {
-                return 2212;
-            }
-
-            if (mmpdg == mpdg) {
-                cur = midx;
-                guard++;
-                continue;
-            }
-
-            return mmpdg;
+            momidx = midx;
+            break;
         }
 
         cur = midx;
         guard++;
     }
 
-    return 0;
-}
+    if (momidx < 0) return 0;
 
-int GenAnalysis::mothermothermotherID(int Genidx){
-    if (Genidx < 0 || Genidx >= (int)GenPart_pdgId.size()) return 0;
-
-    int cur = Genidx;
-    int guard = 0;
+    // Step 2: find first non-copy mother of that mother
+    cur = momidx;
+    guard = 0;
+    int momPdg = GenPart_pdgId[momidx];
 
     while (guard < 200) {
-        int midx = GenPart_genPartIdxMother[cur];
-        if (midx < 0 || midx >= (int)GenPart_pdgId.size()) return 0;
+        int mmidx = GenPart_genPartIdxMother[cur];
+        if (mmidx < 0 || mmidx >= (int)GenPart_pdgId.size()) return 0;
 
-        int mpdg = GenPart_pdgId[midx];
+        int mmpdg = GenPart_pdgId[mmidx];
 
-        // stop at beam / parton / quark
-        if (mpdg == 2212 || abs(mpdg) == 21 || abs(mpdg) <= 6) {
+        if (mmpdg == 2212 || abs(mmpdg) == 21 || abs(mmpdg) <= 6) {
             return 2212;
         }
 
-        // first different mother found
-        if (mpdg != GenPart_pdgId[cur]) {
-            int mmidx = GenPart_genPartIdxMother[midx];
-            if (mmidx < 0 || mmidx >= (int)GenPart_pdgId.size()) return 0;
-
-            int mmpdg = GenPart_pdgId[mmidx];
-
-            if (mmpdg == 2212 || abs(mmpdg) == 21 || abs(mmpdg) <= 6) {
-                return 2212;
-            }
-
-            // if second level still same as first, keep climbing
-            if (mmpdg == mpdg) {
-                cur = midx;
-                guard++;
-                continue;
-            }
-
-            int mmmidx = GenPart_genPartIdxMother[mmidx];
-            if (mmmidx < 0 || mmmidx >= (int)GenPart_pdgId.size()) return 0;
-
-            int mmmpdg = GenPart_pdgId[mmmidx];
-
-            if (mmmpdg == 2212 || abs(mmmpdg) == 21 || abs(mmmpdg) <= 6) {
-                return 2212;
-            }
-
-            // if third level still same as second, keep climbing
-            if (mmmpdg == mmpdg) {
-                cur = mmidx;
-                guard++;
-                continue;
-            }
-
-            return mmmpdg;
+        if (mmpdg != momPdg) {
+            return mmpdg;
         }
 
-        cur = midx;
+        cur = mmidx;
         guard++;
     }
 
@@ -135,6 +87,7 @@ int GenAnalysis::mothermothermotherID(int Genidx){
 }
 
 void GenAnalysis::SetGenVariables(){
+    nGENLeptons = 0;
     TLorentzVector GENmom1, GENmom2;
     TLorentzVector LS3_Z1_1, LS3_Z1_2, LS3_Z2_1, LS3_Z2_2, GENgoodj1,GENgoodj2,GEN_H1Vec,GEN_H2Vec;
     int GENmom1_id=-999, GENmom2_id=-999;
@@ -156,48 +109,38 @@ void GenAnalysis::SetGenVariables(){
                  return; 
              }
         }
+    
+        if (abs(GenPart_pdgId[genpidx]) == 11 || abs(GenPart_pdgId[genpidx]) == 13) {
 
-        if (abs(GenPart_pdgId[genpidx])==11 || abs(GenPart_pdgId[genpidx])==13 || abs(GenPart_pdgId[genpidx])==15){        
-            if (!(GenPart_status[genpidx]==1 || abs(GenPart_pdgId[genpidx])==15)) { //not stable and not tau
+            // Only keep stable final-state electrons/muons.
+            if (GenPart_status[genpidx] != 1) {
                 continue;
             }
-            int mom    = abs(motherID(genpidx));
+
+            int mom  = abs(motherID(genpidx));
             int mom2 = abs(mothermotherID(genpidx));
-            int mom3   = abs(mothermothermotherID(genpidx));
 
-            // l <- Z <- H
-            bool directFromHZZ = (mom == 23 && mom2 == 25);
+            // ------------------------------------------------------------
+            // Case 1:
+            //     l <- Z
+            // ------------------------------------------------------------
+            bool directFromZ = (mom == 23);
 
-            // l <- X <- Z <- H
-            bool indirectFromHZZ = (
-                (mom == 111 || mom == 221 || mom == 331 || mom == 443 || mom == 553) &&
-                (mom2 == 23) &&
-                (mom3 == 25)
+            // ------------------------------------------------------------
+            // Case 2:
+            //     l <- X <- Z
+            // where X can be gamma, pi0, eta, eta', J/psi, Upsilon, tau, etc.
+            // ------------------------------------------------------------
+            bool indirectFromZ = (
+                (mom == 22  || mom == 111 || mom == 221 || mom == 331 ||
+                 mom == 443 || mom == 553 || mom == 15) &&
+                (mom2 == 23)
             );
 
-            if (!(directFromHZZ || indirectFromHZZ)) {
+            if (!(directFromZ || indirectFromZ)) {
                 continue;
             }
-            //if ((abs(motherID(genpidx))==111 || abs(motherID(genpidx))==221 || abs(motherID(genpidx))==331)&&(abs(mothermotherID(genpidx))==23)){
-            //    std::cout << "Keep lepton: PDG ID = " << GenPart_pdgId[genpidx]
-            //      << ", status = " << GenPart_status[genpidx]
-            //      << ", mother PDG ID = " << motherID(genpidx) 
-            //      << ", mother mother PDG ID = "<< mothermotherID(genpidx) << std::endl;
-            //}
-            if (abs(GenPart_pdgId[genpidx]) == 15) {
-                bool hasStableLepDaughter = false;
-                for (unsigned int d = 0; d < GenPart_pdgId.size(); ++d){
-                    if (GenPart_genPartIdxMother[d] != (int)genpidx) continue;
-                    if ((abs(GenPart_pdgId[d])==11 || abs(GenPart_pdgId[d])==13) && GenPart_status[d]==1){
-                        hasStableLepDaughter = true;
-                        break;
-                    }
-                }
-                if (!hasStableLepDaughter) {
-                    continue;
-                }
-            }
-            
+
             nGENLeptons++;
             // Collect FSR photons
             TLorentzVector lep_dressed;
@@ -233,8 +176,6 @@ void GenAnalysis::SetGenVariables(){
             GENlep_phi.push_back( lep_dressed.Phi() );
             GENlep_mass.push_back( lep_dressed.M() );
             GENlep_MomId.push_back(motherID(genpidx));
-            GENlep_MomMomId.push_back(mothermotherID(genpidx));
-            GENlep_MomMomMomId.push_back(mothermothermotherID(genpidx));
 
             TLorentzVector thisLep;
             thisLep.SetPtEtaPhiM(lep_dressed.Pt(),lep_dressed.Eta(),lep_dressed.Phi(),lep_dressed.M());
@@ -336,9 +277,6 @@ void GenAnalysis::SetGenVariables(){
             nGENmu++;
         }
     }
-
-
-
 
     if(nGENmu>3) {flag4mu++;nGEN4mu++;}
     if(nGENe>3) {flag4e++;nGEN4e++;}

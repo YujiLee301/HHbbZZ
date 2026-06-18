@@ -10,6 +10,7 @@ from PhysicsTools.NATModules.modules.eleScaleRes import eleScaleRes as eleScaleR
 from PhysicsTools.NATModules.modules.muonSF import MuonSF as muonSF_natlib
 from PhysicsTools.NATModules.modules.muonScaleRes import muonScaleRes as muonScaleRes_natlib
 from PhysicsTools.NATModules.modules.puWeightProducer import puWeightProducer as puWeightProducer_natlib
+from PhysicsTools.NATModules.modules.jetId import jetId as jetId_natlib
 from PhysicsTools.NATModules.modules.jetVetoMap import jetVMAP as jetVMAP_natlib
 from PhysicsTools.NATModules.modules.jetCorr import jetJERC as jetJERC_natlib
 from PhysicsTools.NATModules.modules.jetBtag import jetBtag as jetBtag_natlib
@@ -22,10 +23,10 @@ from kFactorProducer import create_kfactor_producer
 def get_electron_sf_2022(data_tag, isMC):
     """Get electron scale factor corrections for 2022."""
     if "pre_EE" in data_tag:
-        eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22/electron.json.gz")
+        eleSF = electronSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-22CDSep23-Summer22-NanoAODv12/latest/electron.json.gz")
         era = "2022Re-recoBCD"
     else:
-        eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electron.json.gz")
+        eleSF = electronSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-22EFGSep23-Summer22EE-NanoAODv12/latest/electron.json.gz")
         era = "2022Re-recoE+PromptFG"
     
     set_name = "Electron-ID-SF"
@@ -43,34 +44,79 @@ def get_electron_sf_2022(data_tag, isMC):
     eleSF.addCorrection(set_name, era, reco_wp, "sfup", "Reco_sfUp")
     eleSF.addCorrection(set_name, era, reco_wp, "sfdown", "Reco_sfDown")
     
-    # ID SF
-    for wp in ["Loose", "Medium"]:
+    # Cut-based ID SF
+    for wp in ["Veto", "Loose", "Medium", "Tight"]:
         eleSF.addCorrection(set_name, era, wp, "sf", f"ID_{wp}_sf")
         eleSF.addCorrection(set_name, era, wp, "sfup", f"ID_{wp}_sfUp")
         eleSF.addCorrection(set_name, era, wp, "sfdown", f"ID_{wp}_sfDown")
-    
+
+    # MVA ID (Iso / NoIso) SF
+    for wp in ["wp80iso", "wp90iso", "wp80noiso", "wp90noiso"]:
+        eleSF.addCorrection(set_name, era, wp, "sf", f"ID_{wp}_sf")
+        eleSF.addCorrection(set_name, era, wp, "sfup", f"ID_{wp}_sfUp")
+        eleSF.addCorrection(set_name, era, wp, "sfdown", f"ID_{wp}_sfDown")
     return eleSF
 
 
 def get_muon_sf_2022(data_tag, isMC):
     """Get muon scale factor corrections for 2022."""
-    if "post_EE" not in data_tag:
-        muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22/muon_Z.json.gz")
+    if "pre_EE" in data_tag:
+        muSF = muonSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-22CDSep23-Summer22-NanoAODv12/latest/muon_Z.json.gz")
     else:
-        muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22EE/muon_Z.json.gz")
+        muSF = muonSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-22EFGSep23-Summer22EE-NanoAODv12/latest/muon_Z.json.gz")
     
-    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "nominal", "MuonSF")
-    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst", "MuonSFsyst")
-    
+    # ============================================================
+    # ID SFs
+    # ============================================================
+
+    # LooseID relative to TrackerMuons
+    muSF.addCorrection("NUM_LooseID_DEN_TrackerMuons", "nominal", "MuonLooseIDSF")
+    muSF.addCorrection("NUM_LooseID_DEN_TrackerMuons", "syst",    "MuonLooseIDSFsyst")
+
+    # MediumID relative to TrackerMuons
+    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "nominal", "MuonMediumIDSF")
+    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst",    "MuonMediumIDSFsyst")
+
+    # TightID relative to TrackerMuons
+    muSF.addCorrection("NUM_TightID_DEN_TrackerMuons", "nominal", "MuonTightIDSF")
+    muSF.addCorrection("NUM_TightID_DEN_TrackerMuons", "syst",    "MuonTightIDSFsyst")
+
+    # ============================================================
+    # Isolation SFs
+    #
+    # LoosePFIso is provided on top of LooseID, MediumID, TightID.
+    # TightPFIso is provided on top of MediumID and TightID.
+    # ============================================================
+
+    # LoosePFIso relative to LooseID
+    muSF.addCorrection("NUM_LoosePFIso_DEN_LooseID", "nominal", "MuonLoosePFIsoLooseIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_LooseID", "syst",    "MuonLoosePFIsoLooseIDSFsyst")
+
+    # LoosePFIso relative to MediumID
+    muSF.addCorrection("NUM_LoosePFIso_DEN_MediumID", "nominal", "MuonLoosePFIsoMediumIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_MediumID", "syst",    "MuonLoosePFIsoMediumIDSFsyst")
+
+    # LoosePFIso relative to TightID
+    muSF.addCorrection("NUM_LoosePFIso_DEN_TightID", "nominal", "MuonLoosePFIsoTightIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_TightID", "syst",    "MuonLoosePFIsoTightIDSFsyst")
+
+    # TightPFIso relative to MediumID
+    muSF.addCorrection("NUM_TightPFIso_DEN_MediumID", "nominal", "MuonTightPFIsoMediumIDSF")
+    muSF.addCorrection("NUM_TightPFIso_DEN_MediumID", "syst",    "MuonTightPFIsoMediumIDSFsyst")
+
+    # TightPFIso relative to TightID
+    muSF.addCorrection("NUM_TightPFIso_DEN_TightID", "nominal", "MuonTightPFIsoTightIDSF")
+    muSF.addCorrection("NUM_TightPFIso_DEN_TightID", "syst",    "MuonTightPFIsoTightIDSFsyst")
+
     return muSF
 
 
 def get_muon_scale_res_2022(data_tag, isMC, overwritePt):
     """Get muon scale/resolution corrections for 2022."""
     if "pre_EE" in data_tag:
-        muonScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22/muon_scalesmearing.json.gz"
+        muonScale_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-22CDSep23-Summer22-NanoAODv12/latest/muon_scalesmearing.json.gz"
     else:
-        muonScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22EE/muon_scalesmearing.json.gz"
+        muonScale_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-22EFGSep23-Summer22EE-NanoAODv12/latest/muon_scalesmearing.json.gz"
     
     return muonScaleRes_natlib(muonScale_json, is_mc=isMC, overwritePt=overwritePt, minPt=3.)
 
@@ -78,13 +124,13 @@ def get_muon_scale_res_2022(data_tag, isMC, overwritePt):
 def get_electron_scale_res_2022(data_tag, isMC, overwritePt):
     """Get electron scale/resolution corrections for 2022."""
     if "pre_EE" in data_tag:
-        eleScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22/electronSS_EtDependent.json.gz"
-        scaleKey = "EGMScale_Compound_Ele_2022preEE"
-        smearKey = "EGMSmearAndSyst_ElePTsplit_2022preEE"
+        eleScale_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-22CDSep23-Summer22-NanoAODv12/latest/electronSS_EtDependent.json.gz"
+        scaleKey = "Scale"
+        smearKey = "SmearAndSyst"
     else:
-        eleScale_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS_EtDependent.json.gz"
-        scaleKey = "EGMScale_Compound_Ele_2022postEE"
-        smearKey = "EGMSmearAndSyst_ElePTsplit_2022postEE"
+        eleScale_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-22EFGSep23-Summer22EE-NanoAODv12/latest/electronSS_EtDependent.json.gz"
+        scaleKey = "Scale"
+        smearKey = "SmearAndSyst"
     
     return eleScaleRes_natlib(eleScale_json, scaleKey, smearKey, overwritePt)
 
@@ -92,10 +138,10 @@ def get_electron_scale_res_2022(data_tag, isMC, overwritePt):
 def get_electron_sf_2023(data_tag, isMC):
     """Get electron scale factor corrections for 2023."""
     if "pre_BPix" in data_tag:
-        eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23/electron.json.gz")
+        eleSF = electronSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-23CSep23-Summer23-NanoAODv12/latest/electron.json.gz")
         era = "2023PromptC"
     else:
-        eleSF = electronSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23BPix/electron.json.gz")
+        eleSF = electronSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-23DSep23-Summer23BPix-NanoAODv12/latest/electron.json.gz")
         era = "2023PromptD"
     
     set_name = "Electron-ID-SF"
@@ -113,50 +159,186 @@ def get_electron_sf_2023(data_tag, isMC):
     eleSF.addCorrection(set_name, era, reco_wp, "sfup", "Reco_sfUp")
     eleSF.addCorrection(set_name, era, reco_wp, "sfdown", "Reco_sfDown")
     
-    # ID SF
-    for wp in ["Loose", "Medium"]:
+    # Cut-based ID SF
+    for wp in ["Veto", "Loose", "Medium", "Tight"]:
         eleSF.addCorrection(set_name, era, wp, "sf", f"ID_{wp}_sf")
         eleSF.addCorrection(set_name, era, wp, "sfup", f"ID_{wp}_sfUp")
         eleSF.addCorrection(set_name, era, wp, "sfdown", f"ID_{wp}_sfDown")
-    
+
+    # MVA ID (Iso / NoIso) SF
+    for wp in ["wp80iso", "wp90iso", "wp80noiso", "wp90noiso"]:
+        eleSF.addCorrection(set_name, era, wp, "sf", f"ID_{wp}_sf")
+        eleSF.addCorrection(set_name, era, wp, "sfup", f"ID_{wp}_sfUp")
+        eleSF.addCorrection(set_name, era, wp, "sfdown", f"ID_{wp}_sfDown")
+        
     return eleSF
 
 
 def get_muon_sf_2023(data_tag, isMC):
     """Get muon scale factor corrections for 2023."""
-    if "post_BPix" not in data_tag:
-        muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23/muon_Z.json.gz")
+    if "pre_BPix" in data_tag:
+        muSF = muonSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-23CSep23-Summer23-NanoAODv12/latest/muon_Z.json.gz")
     else:
-        muSF = muonSF_natlib("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23BPix/muon_Z.json.gz")
+        muSF = muonSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-23DSep23-Summer23BPix-NanoAODv12/latest/muon_Z.json.gz")
     
-    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "nominal", "MuonSF")
-    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst", "MuonSFsyst")
-    
-    return muSF
+    # ============================================================
+    # ID SFs
+    # ============================================================
 
+    # LooseID relative to TrackerMuons
+    muSF.addCorrection("NUM_LooseID_DEN_TrackerMuons", "nominal", "MuonLooseIDSF")
+    muSF.addCorrection("NUM_LooseID_DEN_TrackerMuons", "syst",    "MuonLooseIDSFsyst")
+
+    # MediumID relative to TrackerMuons
+    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "nominal", "MuonMediumIDSF")
+    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst",    "MuonMediumIDSFsyst")
+
+    # TightID relative to TrackerMuons
+    muSF.addCorrection("NUM_TightID_DEN_TrackerMuons", "nominal", "MuonTightIDSF")
+    muSF.addCorrection("NUM_TightID_DEN_TrackerMuons", "syst",    "MuonTightIDSFsyst")
+
+    # ============================================================
+    # Isolation SFs
+    #
+    # LoosePFIso is provided on top of LooseID, MediumID, TightID.
+    # TightPFIso is provided on top of MediumID and TightID.
+    # ============================================================
+
+    # LoosePFIso relative to LooseID
+    muSF.addCorrection("NUM_LoosePFIso_DEN_LooseID", "nominal", "MuonLoosePFIsoLooseIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_LooseID", "syst",    "MuonLoosePFIsoLooseIDSFsyst")
+
+    # LoosePFIso relative to MediumID
+    muSF.addCorrection("NUM_LoosePFIso_DEN_MediumID", "nominal", "MuonLoosePFIsoMediumIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_MediumID", "syst",    "MuonLoosePFIsoMediumIDSFsyst")
+
+    # LoosePFIso relative to TightID
+    muSF.addCorrection("NUM_LoosePFIso_DEN_TightID", "nominal", "MuonLoosePFIsoTightIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_TightID", "syst",    "MuonLoosePFIsoTightIDSFsyst")
+
+    # TightPFIso relative to MediumID
+    muSF.addCorrection("NUM_TightPFIso_DEN_MediumID", "nominal", "MuonTightPFIsoMediumIDSF")
+    muSF.addCorrection("NUM_TightPFIso_DEN_MediumID", "syst",    "MuonTightPFIsoMediumIDSFsyst")
+
+    # TightPFIso relative to TightID
+    muSF.addCorrection("NUM_TightPFIso_DEN_TightID", "nominal", "MuonTightPFIsoTightIDSF")
+    muSF.addCorrection("NUM_TightPFIso_DEN_TightID", "syst",    "MuonTightPFIsoTightIDSFsyst")
+
+    return muSF
 
 def get_muon_scale_res_2023(data_tag, isMC, overwritePt):
     """Get muon scale/resolution corrections for 2023."""
     if "pre_BPix" in data_tag:
-        muon_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23/muon_scalesmearing.json.gz"
+        muon_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-23CSep23-Summer23-NanoAODv12/latest/muon_scalesmearing.json.gz"
     else:
-        muon_json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2023_Summer23BPix/muon_scalesmearing.json.gz"
+        muon_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-23DSep23-Summer23BPix-NanoAODv12/latest/muon_scalesmearing.json.gz"
     
     return muonScaleRes_natlib(muon_json, is_mc=isMC, overwritePt=overwritePt, minPt=3.)
 
 
 def get_electron_scale_res_2023(data_tag, isMC, overwritePt):
     """Get electron scale/resolution corrections for 2023."""
-    if "post_BPix" not in data_tag:
-        json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23/electronSS_EtDependent.json.gz"
-        scaleKey = "EGMScale_Compound_Ele_2023preBPIX"
-        smearKey = "EGMSmearAndSyst_ElePTsplit_2023preBPIX"
+    if "pre_BPix" in data_tag:
+        json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-23CSep23-Summer23-NanoAODv12/latest/electronSS_EtDependent.json.gz"
+        scaleKey = "Scale"
+        smearKey = "SmearAndSyst"
     else:
-        json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2023_Summer23BPix/electronSS_EtDependent.json.gz"
-        scaleKey = "EGMScale_Compound_Ele_2023postBPIX"
-        smearKey = "EGMSmearAndSyst_ElePTsplit_2023postBPIX"
+        json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-23DSep23-Summer23BPix-NanoAODv12/latest/electronSS_EtDependent.json.gz"
+        scaleKey = "Scale"
+        smearKey = "SmearAndSyst"
     
     return eleScaleRes_natlib(json_path, scaleKey, smearKey, overwritePt)
+
+
+def get_electron_sf_2024(data_tag, isMC):
+    """Get electron scale factor corrections for 2024 Prompt."""
+
+    # 2024 prompt uses split JSONs:
+    #   - electron_v1.json.gz      : reco SF
+    #   - electronID_v1.json.gz    : ID SF
+    reco_id_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest/electron.json.gz"
+    
+    era = "2024Prompt"
+
+    # -------------------------
+    # Reco SF
+    # -------------------------
+    eleRecoSF = electronSF_natlib(reco_id_json)
+    set_name = "Electron-ID-SF"
+
+    def reco_wp(pt):
+        # 2024 prompt: RecoBelow20 is still missing
+        if pt < 20:
+            return None
+        elif pt <= 75:
+            return "Reco20to75"
+        else:
+            return "RecoAbove75"
+
+    eleRecoSF.addCorrection(set_name, era, reco_wp, "sf", "Reco_sf")
+    eleRecoSF.addCorrection(set_name, era, reco_wp, "sfup", "Reco_sfUp")
+    eleRecoSF.addCorrection(set_name, era, reco_wp, "sfdown", "Reco_sfDown")
+
+    # -------------------------
+    # ID SF
+    # -------------------------
+    eleIDSF = electronSF_natlib(reco_id_json)
+
+    for wp in ["wp80iso", "wp90iso", "wp80noiso", "wp90noiso"]:
+        eleIDSF.addCorrection(set_name, era, wp, "sf", f"ID_{wp}_sf")
+        eleIDSF.addCorrection(set_name, era, wp, "sfup", f"ID_{wp}_sfUp")
+        eleIDSF.addCorrection(set_name, era, wp, "sfdown", f"ID_{wp}_sfDown")
+
+    return eleRecoSF, eleIDSF
+
+def get_electron_scale_res_2024(data_tag, isMC, overwritePt):
+    """Get electron scale/resolution corrections for 2024."""
+
+    json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest/electronSS_EtDependent.json.gz"
+    scaleKey = "Scale"
+    smearKey = "SmearAndSyst"
+
+    return eleScaleRes_natlib(json_path, scaleKey, smearKey, overwritePt)
+
+def get_muon_sf_2024(data_tag, isMC):
+    """Get muon scale factor corrections for 2024."""
+
+    muSF = muonSF_natlib("/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest/muon_Z.json.gz")
+
+    # ID SFs
+    muSF.addCorrection("NUM_LooseID_DEN_TrackerMuons",  "nominal", "LooseIDSF")
+    muSF.addCorrection("NUM_LooseID_DEN_TrackerMuons",  "syst",    "LooseIDSFsyst")
+
+    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "nominal", "MediumIDSF")
+    muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "syst",    "MediumIDSFsyst")
+
+    muSF.addCorrection("NUM_TightID_DEN_TrackerMuons",  "nominal", "TightIDSF")
+    muSF.addCorrection("NUM_TightID_DEN_TrackerMuons",  "syst",    "TightIDSFsyst")
+
+    # ISO SFs
+    muSF.addCorrection("NUM_LoosePFIso_DEN_LooseID",    "nominal", "LoosePFIsoLooseIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_LooseID",    "syst",    "LoosePFIsoLooseIDSFsyst")
+
+    muSF.addCorrection("NUM_LoosePFIso_DEN_MediumID",   "nominal", "LoosePFIsoMediumIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_MediumID",   "syst",    "LoosePFIsoMediumIDSFsyst")
+
+    muSF.addCorrection("NUM_LoosePFIso_DEN_TightID",    "nominal", "LoosePFIsoTightIDSF")
+    muSF.addCorrection("NUM_LoosePFIso_DEN_TightID",    "syst",    "LoosePFIsoTightIDSFsyst")
+
+    muSF.addCorrection("NUM_TightPFIso_DEN_MediumID",   "nominal", "TightPFIsoMediumIDSF")
+    muSF.addCorrection("NUM_TightPFIso_DEN_MediumID",   "syst",    "TightPFIsoMediumIDSFsyst")
+
+    muSF.addCorrection("NUM_TightPFIso_DEN_TightID",    "nominal", "TightPFIsoTightIDSF")
+    muSF.addCorrection("NUM_TightPFIso_DEN_TightID",    "syst",    "TightPFIsoTightIDSFsyst")
+
+    return muSF
+
+def get_muon_scale_res_2024(data_tag, isMC, overwritePt):
+    """Get muon scale/resolution corrections for 2024."""
+    
+    muon_json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest/muon_scalesmearing.json.gz"
+    
+    return muonScaleRes_natlib(muon_json, is_mc=isMC, overwritePt=overwritePt, minPt=3.)
 
 
 def get_electron_sf_2018(isMC):
@@ -292,11 +474,56 @@ def get_pu_weight_2023(data_tag):
     
     return puWeightProducer_natlib(json, key)
 
+def get_pu_weight_2024(data_tag):
+    """Get PU weight producer for 2024."""
+    json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/LUM/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest/puWeights_CDEFGHI.json.gz"
+    key = "Collisions24_CDEFGHI_goldenJSON"
+
+    return puWeightProducer_natlib(json, key)
+
+def get_jet_id_2022(data_tag):
+    """Update Jet_jetId for 2022 NanoAODv12 using the Twiki recipe."""
+
+    return jetId_natlib("", nanoVersion=12)
+
+def get_jet_id_2023(data_tag, nanoVersion):
+    """
+    Recompute Jet_jetId for 2023.
+
+    NanoAODv12:
+      Use the Twiki recipe, because v12 does not contain all inputs needed by the JME jetid.json.gz correction.
+
+    NanoAODv13 and above:
+      Use the JME jetid.json.gz, similar to NanoAODv15.
+    """
+
+    if nanoVersion == 12:
+        return jetId_natlib("", nanoVersion=12)
+
+    if nanoVersion >= 13:
+        if "pre_BPix" in data_tag:
+            json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-23CSep23-Summer23-NanoAODv12/latest/jetid.json.gz"
+        else:
+            json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-23DSep23-Summer23BPix-NanoAODv12/latest/jetid.json.gz"
+
+        if not os.path.exists(json_path):
+            raise RuntimeError(f"Cannot find 2023 NanoAODv{nanoVersion} JetID JSON: {json_path}")
+
+        return jetId_natlib(json_path, nanoVersion=nanoVersion)
+
+    raise RuntimeError(f"Unsupported NanoAOD version for 2023 JetID: {nanoVersion}")
+
+def get_jet_id_2024(data_tag):
+    """Recompute Jet_jetId for 2024 NanoAODv15 using JME jetid.json.gz."""
+
+    json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest/jetid.json.gz"
+
+    return jetId_natlib(json_path, nanoVersion=15)
 
 def get_jet_veto_map_2022(data_tag):
     """Get jet veto map module for 2022."""
     if "pre_EE" in data_tag:
-        json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-22CDSep23-Summer22-NanoAODv12/2025-09-23/jetvetomaps.json.gz"
+        json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-22CDSep23-Summer22-NanoAODv12/latest/jetvetomaps.json.gz"
         corrName = "Summer22_23Sep2023_RunCD_V1"
     else:
         json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-22EFGSep23-Summer22EE-NanoAODv12/latest/jetvetomaps.json.gz"
@@ -346,7 +573,7 @@ def get_jet_correction_2022(data_tag, isMC):
     
     if isMC:
         if "pre_EE" in data_tag:
-            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/latest"
+            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/2026-04-13"
             L1Key = "Summer22_22Sep2023_V3_MC_L1FastJet_AK4PFPuppi"
             L2Key = "Summer22_22Sep2023_V3_MC_L2Relative_AK4PFPuppi"
             L3Key = "Summer22_22Sep2023_V3_MC_L3Absolute_AK4PFPuppi"
@@ -359,7 +586,7 @@ def get_jet_correction_2022(data_tag, isMC):
             JERKey = "Summer22_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi"
             JERsfKey = "Summer22_22Sep2023_JRV1_MC_ScaleFactor_AK4PFPuppi"
         else:
-            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/latest"
+            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/2026-04-13"
             L1Key = "Summer22EE_22Sep2023_V3_MC_L1FastJet_AK4PFPuppi"
             L2Key = "Summer22EE_22Sep2023_V3_MC_L2Relative_AK4PFPuppi"
             L3Key = "Summer22EE_22Sep2023_V3_MC_L3Absolute_AK4PFPuppi"
@@ -374,7 +601,7 @@ def get_jet_correction_2022(data_tag, isMC):
     else:
         # Data - JER are not applied to data
         if "pre_EE" in data_tag:
-            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/latest"
+            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/2026-04-13"
             L1Key = "Summer22_22Sep2023_V3_DATA_L1FastJet_AK4PFPuppi"
             L2Key = "Summer22_22Sep2023_V3_DATA_L2Relative_AK4PFPuppi"
             L3Key = "Summer22_22Sep2023_V3_DATA_L3Absolute_AK4PFPuppi"
@@ -386,7 +613,7 @@ def get_jet_correction_2022(data_tag, isMC):
             JERsfKey = None
         else:
             # For post_EE, would need to handle different runs (E, F, G) - using E as default
-            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/latest"
+            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/2026-04-13"
             L1Key = "Summer22EE_22Sep2023_V3_DATA_L1FastJet_AK4PFPuppi"
             L2Key = "Summer22EE_22Sep2023_V3_DATA_L2Relative_AK4PFPuppi"
             L3Key = "Summer22EE_22Sep2023_V3_DATA_L3Absolute_AK4PFPuppi"
@@ -435,20 +662,20 @@ def get_jet_correction_2023(data_tag, isMC):
     
     if isMC:
         if "pre_BPix" in data_tag:
-            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/latest"
-            L1Key = "Summer23Prompt23_V2_MC_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer23Prompt23_V2_MC_L2Relative_AK4PFPuppi"
-            L3Key = "Summer23Prompt23_V2_MC_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer23Prompt23_V2_MC_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = "Summer23Prompt23_V2_MC_Total_AK4PFPuppi"
+            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/2026-04-13"
+            L1Key = "Summer23Prompt23_V3_MC_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer23Prompt23_V3_MC_L2Relative_AK4PFPuppi"
+            L3Key = "Summer23Prompt23_V3_MC_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer23Prompt23_V3_MC_L2L3Residual_AK4PFPuppi"
+            scaleTotalKey = "Summer23Prompt23_V3_MC_Total_AK4PFPuppi"
             scaleKeyRegrouped11 = [
-                f"Summer23Prompt23_V2_MC_{label.format(year='2023')}_AK4PFPuppi" for label in jes_systematics_11split
+                f"Summer23Prompt23_V3_MC_{label.format(year='2023')}_AK4PFPuppi" for label in jes_systematics_11split
             ]
             smearKey = "JERSmear"
             JERKey = "Summer23Prompt23_RunCv1234_JRV1_MC_PtResolution_AK4PFPuppi"
             JERsfKey = "Summer23Prompt23_RunCv1234_JRV1_MC_ScaleFactor_AK4PFPuppi"
         else:
-            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/latest"
+            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/2026-04-13"
             L1Key = "Summer23BPixPrompt23_V3_MC_L1FastJet_AK4PFPuppi"
             L2Key = "Summer23BPixPrompt23_V3_MC_L2Relative_AK4PFPuppi"
             L3Key = "Summer23BPixPrompt23_V3_MC_L3Absolute_AK4PFPuppi"
@@ -463,7 +690,7 @@ def get_jet_correction_2023(data_tag, isMC):
     else:
         # Data - JER are not applied to data
         if "pre_BPix" in data_tag:
-            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/latest"
+            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/2026-04-13"
             L1Key = "Summer23Prompt23_V3_DATA_L1FastJet_AK4PFPuppi"
             L2Key = "Summer23Prompt23_V3_DATA_L2Relative_AK4PFPuppi"
             L3Key = "Summer23Prompt23_V3_DATA_L3Absolute_AK4PFPuppi"
@@ -474,7 +701,7 @@ def get_jet_correction_2023(data_tag, isMC):
             JERKey = None
             JERsfKey = None
         else:
-            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/latest"
+            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/2026-04-13"
             L1Key = "Summer23BPixPrompt23_V3_DATA_L1FastJet_AK4PFPuppi"
             L2Key = "Summer23BPixPrompt23_V3_DATA_L2Relative_AK4PFPuppi"
             L3Key = "Summer23BPixPrompt23_V3_DATA_L3Absolute_AK4PFPuppi"
@@ -502,7 +729,6 @@ def get_jet_correction_2023(data_tag, isMC):
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 
-
 def get_jet_correction_2024(data_tag, isMC):
     """Get jet energy correction (JERC) module for 2024.
     Reference: https://github.com/CJLST/ZZAnalysis/blob/Run3/NanoAnalysis/python/modules/jetJERC.py
@@ -523,14 +749,14 @@ def get_jet_correction_2024(data_tag, isMC):
     ]
     
     if isMC:
-        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest"
-        L1Key = "Summer24Prompt24_V1_MC_L1FastJet_AK4PFPuppi"
-        L2Key = "Summer24Prompt24_V1_MC_L2Relative_AK4PFPuppi"
-        L3Key = "Summer24Prompt24_V1_MC_L3Absolute_AK4PFPuppi"
-        L2L3Key = "Summer24Prompt24_V1_MC_L2L3Residual_AK4PFPuppi"
-        scaleTotalKey = "Summer24Prompt24_V1_MC_Total_AK4PFPuppi"
+        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-12-02"
+        L1Key = "Summer24Prompt24_V2_MC_L1FastJet_AK4PFPuppi"
+        L2Key = "Summer24Prompt24_V2_MC_L2Relative_AK4PFPuppi"
+        L3Key = "Summer24Prompt24_V2_MC_L3Absolute_AK4PFPuppi"
+        L2L3Key = "Summer24Prompt24_V2_MC_L2L3Residual_AK4PFPuppi"
+        scaleTotalKey = "Summer24Prompt24_V2_MC_Total_AK4PFPuppi"
         scaleKeyRegrouped11 = [
-            f"Summer24Prompt24_V1_MC_{label.format(year='2024')}_AK4PFPuppi" for label in jes_systematics_11split
+            f"Summer24Prompt24_V2_MC_{label.format(year='2024')}_AK4PFPuppi" for label in jes_systematics_11split
         ]
         smearKey = "JERSmear"
         # It appears the 23BPix keys are used for the following:
@@ -538,18 +764,18 @@ def get_jet_correction_2024(data_tag, isMC):
         JERsfKey = "Summer23BPixPrompt23_RunD_JRV1_MC_ScaleFactor_AK4PFPuppi"
     else:
         # Data - JER are not applied to data
-        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/latest"
-        L1Key = "Summer24Prompt24_V1_DATA_L1FastJet_AK4PFPuppi"
-        L2Key = "Summer24Prompt24_V1_DATA_L2Relative_AK4PFPuppi"
-        L3Key = "Summer24Prompt24_V1_DATA_L3Absolute_AK4PFPuppi"
-        L2L3Key = "Summer24Prompt24_V1_DATA_L2L3Residual_AK4PFPuppi"
+        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-12-02"
+        L1Key = "Summer24Prompt24_V2_DATA_L1FastJet_AK4PFPuppi"
+        L2Key = "Summer24Prompt24_V2_DATA_L2Relative_AK4PFPuppi"
+        L3Key = "Summer24Prompt24_V2_DATA_L3Absolute_AK4PFPuppi"
+        L2L3Key = "Summer24Prompt24_V2_DATA_L2L3Residual_AK4PFPuppi"
         scaleTotalKey = None
         scaleKeyRegrouped11 = None
         smearKey = None
         JERKey = None
         JERsfKey = None
     
-    json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/%s/jet_jerc.json.gz" % (folderKey)
+    json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-12-02/jet_jerc.json.gz"
     json_JERsmear = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/jer_smear.json.gz"
     
     # Configuration flags
@@ -566,7 +792,7 @@ def get_jet_correction_2024(data_tag, isMC):
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 
-
+'''
 _btag_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "btag")
 
 # Tagger settings for RobustParTAK4B Medium WP (Run 3 only).
@@ -614,22 +840,19 @@ def get_btag_sf_2023(data_tag, isMC):
         json_SF=json_SF,
         json_eff=json_eff,
     )
+'''
 
-
-def get_kfactor_module(year, file_path, kfactor_dir="/eos/user/l/liuc/kFactor"):
+def get_kfactor_module(year, file_path, kfactor_dir=None):
     """
     Get kFactor correction module for ZZ samples.
     Passes the full file path to kFactorProducer for robust sample identification.
     """
     print(f"[corrections_config] Creating kFactorProducer for file: {file_path}")
 
-    path_lower = file_path.lower()
-    sample_name = os.path.basename(path_lower)
-    if sample_name.endswith(".root"):
-        sample_name = sample_name[:-5]
+    path_lower = file_path.lower().strip()
 
-    is_ggzz = sample_name.startswith("gluglutocontinto2z")
-    is_qqzz = sample_name.startswith("zzto4l")
+    is_ggzz = "gluglutocontinto2z" in path_lower
+    is_qqzz = ("zzto4l" in path_lower) and ("glugluhtozzto4l" not in path_lower)
 
     if is_ggzz or is_qqzz:
         print(f"[corrections_config] Sample requires k-factors (ggZZ: {is_ggzz}, qqZZ: {is_qqzz})")
@@ -638,7 +861,7 @@ def get_kfactor_module(year, file_path, kfactor_dir="/eos/user/l/liuc/kFactor"):
         print(f"[corrections_config] Sample does not require k-factors")
         return None
 
-def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt):
+def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt, nanoVersion):
     """
     Get all correction modules for a given year and data tag.
     
@@ -665,24 +888,29 @@ def get_corrections_modules(year, data_tag, first_file, isMC, overwritePt):
         modules.append(get_muon_sf_2022(data_tag, isMC))
         modules.append(get_muon_scale_res_2022(data_tag, isMC, overwritePt))
         modules.append(get_electron_scale_res_2022(data_tag, isMC, overwritePt))
-        modules.append(get_jet_veto_map_2022(data_tag))
         modules.append(get_jet_correction_2022(data_tag, isMC))
-        modules.append(get_btag_sf_2022(data_tag, isMC))
+        modules.append(get_jet_id_2022(data_tag))
+        modules.append(get_jet_veto_map_2022(data_tag))
+        #modules.append(get_btag_sf_2022(data_tag, isMC))
     
     elif year == 2023:
         modules.append(get_electron_sf_2023(data_tag, isMC))
         modules.append(get_muon_sf_2023(data_tag, isMC))
         modules.append(get_muon_scale_res_2023(data_tag, isMC, overwritePt))
         modules.append(get_electron_scale_res_2023(data_tag, isMC, overwritePt))
-        modules.append(get_jet_veto_map_2023(data_tag))
         modules.append(get_jet_correction_2023(data_tag, isMC))
-        modules.append(get_btag_sf_2023(data_tag, isMC))
-
+        modules.append(get_jet_id_2023(data_tag, nanoVersion))
+        modules.append(get_jet_veto_map_2023(data_tag))
+        #modules.append(get_btag_sf_2023(data_tag, isMC))
+    
     elif year == 2024:
-        # Note: 2024 corrections may need to be added for electron/muon SF and scale/res
-        # For now, only jet corrections are implemented
-        modules.append(get_jet_veto_map_2024(data_tag))
+        modules.extend(get_electron_sf_2024(data_tag, isMC))
+        modules.append(get_muon_sf_2024(data_tag, isMC))
+        modules.append(get_muon_scale_res_2024(data_tag, isMC, overwritePt))
+        modules.append(get_electron_scale_res_2024(data_tag, isMC, overwritePt))
         modules.append(get_jet_correction_2024(data_tag, isMC))
+        modules.append(get_jet_id_2024(data_tag))
+        modules.append(get_jet_veto_map_2024(data_tag))
     
     elif year == 2018:
         modules.append(get_electron_sf_2018(isMC))
@@ -710,7 +938,7 @@ def get_pu_weight_module(year, data_tag):
     Get PU weight module for MC processing.
     
     Args:
-        year: Year (2022, 2023)
+        year: Year (2022, 2023, 2024)
         data_tag: Data tag
     
     Returns:
@@ -720,6 +948,8 @@ def get_pu_weight_module(year, data_tag):
         return get_pu_weight_2022(data_tag)
     elif year == 2023:
         return get_pu_weight_2023(data_tag)
+    elif year == 2024:
+        return get_pu_weight_2024(data_tag)
     
     return None
 

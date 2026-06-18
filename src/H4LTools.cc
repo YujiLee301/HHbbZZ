@@ -83,7 +83,8 @@ std::vector<bool> H4LTools::pass_Ele_Id(int nanoVersion){
                 if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMEHP;
                 if(fSCeta>=1.479) cutVal = eleBDTWPHEHP;
             }
-            mvaVal = Electron_mvaHZZIso[i];
+            //mvaVal = Electron_mvaHZZIso[i];
+            mvaVal = Electron_mvaNoIso[i];
             passid.push_back(mvaVal > cutVal);
         }
         else{
@@ -695,72 +696,120 @@ bool H4LTools::BuildBestDijet(){
         }
     }
 
-    if(jetidx.size()<JetNcut){
+    if(jetidx.size() < JetNcut){
         return false;
     }
 
-    unsigned int jet1index, jet2index;
-    jet1index = 99;
-    jet2index = 99;
+    // NanoAODv12 / 2022 / 2023: use RobustParT
+    // NanoAODv15 / 2024:        use UParT
+    bool useUPT = (nanoVersion >= 15);
 
-    if(jetidx.size()==2)
+    const std::vector<float>& Jet_btagParTAK4B =
+        useUPT ? Jet_btagUParTAK4B : Jet_btagRobustParTAK4B;
+
+    unsigned int jet1index = 99;
+    unsigned int jet2index = 99;
+
+    if(jetidx.size() == 2)
     {
         jet1index = jetidx[0];
         jet2index = jetidx[1];
-        if(Jet_btagRobustParTAK4B[jetidx[1]]>Jet_btagRobustParTAK4B[jetidx[0]])
+
+        if(Jet_btagParTAK4B[jetidx[1]] > Jet_btagParTAK4B[jetidx[0]])
         {
             jet1index = jetidx[1];
             jet2index = jetidx[0];
         }
     }
-    if(jetidx.size()>2)
+
+    if(jetidx.size() > 2)
     {
         jet1index = jetidx[0];
         jet2index = jetidx[1];
-        if(Jet_btagRobustParTAK4B[jetidx[1]]>Jet_btagRobustParTAK4B[jetidx[0]])
+
+        if(Jet_btagParTAK4B[jetidx[1]] > Jet_btagParTAK4B[jetidx[0]])
         {
             jet1index = jetidx[1];
             jet2index = jetidx[0];
         }
-        for (unsigned int pj=2;pj<jetidx.size();pj++){
-            if((Jet_btagRobustParTAK4B[jetidx[pj]]>Jet_btagRobustParTAK4B[jet1index])&&(Jet_btagRobustParTAK4B[jetidx[pj]]>Jet_btagRobustParTAK4B[jet2index])){
+
+        for (unsigned int pj = 2; pj < jetidx.size(); pj++){
+            if(
+                (Jet_btagParTAK4B[jetidx[pj]] > Jet_btagParTAK4B[jet1index]) &&
+                (Jet_btagParTAK4B[jetidx[pj]] > Jet_btagParTAK4B[jet2index])
+            ){
                 jet2index = jet1index;
                 jet1index = jetidx[pj];
             }
-            else if((Jet_btagRobustParTAK4B[jetidx[pj]]>Jet_btagRobustParTAK4B[jet2index])&&(Jet_btagRobustParTAK4B[jetidx[pj]]<Jet_btagRobustParTAK4B[jet1index])){
+            else if(
+                (Jet_btagParTAK4B[jetidx[pj]] > Jet_btagParTAK4B[jet2index]) &&
+                (Jet_btagParTAK4B[jetidx[pj]] < Jet_btagParTAK4B[jet1index])
+            ){
                 jet2index = jetidx[pj];
             }
         }
     }
 
-    TLorentzVector Jet1,Jet2;  //4L
-    //SimpleParticleCollection_t associated;//Keep this line when removing the requirement for 2jets
-    if(jetidx.size()>1){
-        Jet1.SetPtEtaPhiM(Jet_pt[jet1index],Jet_eta[jet1index],Jet_phi[jet1index],Jet_mass[jet1index]);
-        pTj1 = Jet1.Pt();
+    TLorentzVector Jet1, Jet2;
+
+    if(jetidx.size() > 1){
+        Jet1.SetPtEtaPhiM(
+            Jet_pt[jet1index],
+            Jet_eta[jet1index],
+            Jet_phi[jet1index],
+            Jet_mass[jet1index]
+        );
+
+        pTj1  = Jet1.Pt();
         etaj1 = Jet1.Eta();
         phij1 = Jet1.Phi();
-        mj1 = Jet1.M();
+        mj1   = Jet1.M();
+
         btagger1_DJ = Jet_btagDeepFlavB[jet1index];
         btagger1_PN = Jet_btagPNetB[jet1index];
-        btagger1_RPT = Jet_btagRobustParTAK4B[jet1index];
 
-        Jet2.SetPtEtaPhiM(Jet_pt[jet2index],Jet_eta[jet2index],Jet_phi[jet2index],Jet_mass[jet2index]);
-        pTj2 = Jet2.Pt();
+        Jet2.SetPtEtaPhiM(
+            Jet_pt[jet2index],
+            Jet_eta[jet2index],
+            Jet_phi[jet2index],
+            Jet_mass[jet2index]
+        );
+
+        pTj2  = Jet2.Pt();
         etaj2 = Jet2.Eta();
         phij2 = Jet2.Phi();
-        mj2 = Jet2.M();
+        mj2   = Jet2.M();
+
         btagger2_DJ = Jet_btagDeepFlavB[jet2index];
         btagger2_PN = Jet_btagPNetB[jet2index];
-        btagger2_RPT = Jet_btagRobustParTAK4B[jet2index];
-        invjj = (Jet1+Jet2).M();
+
+        if(useUPT){
+            // NanoAODv15 / 2024
+            btagger1_RPT = -999.;
+            btagger2_RPT = -999.;
+
+            btagger1_UPT = Jet_btagUParTAK4B[jet1index];
+            btagger2_UPT = Jet_btagUParTAK4B[jet2index];
+        }
+        else{
+            // NanoAODv12 / 2022 / 2023
+            btagger1_RPT = Jet_btagRobustParTAK4B[jet1index];
+            btagger2_RPT = Jet_btagRobustParTAK4B[jet2index];
+
+            btagger1_UPT = -999.;
+            btagger2_UPT = -999.;
+        }
+
+        invjj = (Jet1 + Jet2).M();
 
         if (analysisMode == "2l2j") {
             eventPassDijet = true;
             passDijet++;
         }
+
         return true;
     }
+
     return false;
 }
 
@@ -970,44 +1019,74 @@ bool H4LTools::BuildZZCandidate(){
     }//It doesn’t define PassZZSelection; it just selects events within it that fall in the Higgs mass window.
 
     SimpleParticleCollection_t associated;
-    if(analysisMode == "4l2j"){
-        unsigned int jet1index = 99, jet2index = 99;
 
-        if(jetidx.size()==2)
+    if(analysisMode == "4l2j"){
+        unsigned int jet1index = 99;
+        unsigned int jet2index = 99;
+
+        // Use the same b-tag score as BuildBestDijet().
+        bool useUPT = (nanoVersion >= 15);
+
+        const std::vector<float>& Jet_btagParTAK4B =
+            useUPT ? Jet_btagUParTAK4B : Jet_btagRobustParTAK4B;
+
+        if(jetidx.size() == 2)
         {
             jet1index = jetidx[0];
             jet2index = jetidx[1];
-            if(Jet_btagRobustParTAK4B[jetidx[1]]>Jet_btagRobustParTAK4B[jetidx[0]])
+
+            if(Jet_btagParTAK4B[jetidx[1]] > Jet_btagParTAK4B[jetidx[0]])
             {
                 jet1index = jetidx[1];
                 jet2index = jetidx[0];
             }
         }
-        if(jetidx.size()>2)
+
+        if(jetidx.size() > 2)
         {
             jet1index = jetidx[0];
             jet2index = jetidx[1];
-            if(Jet_btagRobustParTAK4B[jetidx[1]]>Jet_btagRobustParTAK4B[jetidx[0]])
+
+            if(Jet_btagParTAK4B[jetidx[1]] > Jet_btagParTAK4B[jetidx[0]])
             {
                 jet1index = jetidx[1];
                 jet2index = jetidx[0];
             }
-            for (unsigned int pj=2;pj<jetidx.size();pj++){
-                if((Jet_btagRobustParTAK4B[jetidx[pj]]>Jet_btagRobustParTAK4B[jet1index])&&(Jet_btagRobustParTAK4B[jetidx[pj]]>Jet_btagRobustParTAK4B[jet2index])){
+
+            for (unsigned int pj = 2; pj < jetidx.size(); pj++){
+                if(
+                    (Jet_btagParTAK4B[jetidx[pj]] > Jet_btagParTAK4B[jet1index]) &&
+                    (Jet_btagParTAK4B[jetidx[pj]] > Jet_btagParTAK4B[jet2index])
+                ){
                     jet2index = jet1index;
                     jet1index = jetidx[pj];
                 }
-                else if((Jet_btagRobustParTAK4B[jetidx[pj]]>Jet_btagRobustParTAK4B[jet2index])&&(Jet_btagRobustParTAK4B[jetidx[pj]]<Jet_btagRobustParTAK4B[jet1index])){
+                else if(
+                    (Jet_btagParTAK4B[jetidx[pj]] > Jet_btagParTAK4B[jet2index]) &&
+                    (Jet_btagParTAK4B[jetidx[pj]] < Jet_btagParTAK4B[jet1index])
+                ){
                     jet2index = jetidx[pj];
                 }
             }
         }
 
-        if(jetidx.size()>1){
-            TLorentzVector Jet1,Jet2;
-            Jet1.SetPtEtaPhiM(Jet_pt[jet1index],Jet_eta[jet1index],Jet_phi[jet1index],Jet_mass[jet1index]);
+        if(jetidx.size() > 1){
+            TLorentzVector Jet1, Jet2;
+
+            Jet1.SetPtEtaPhiM(
+                Jet_pt[jet1index],
+                Jet_eta[jet1index],
+                Jet_phi[jet1index],
+                Jet_mass[jet1index]
+            );
             associated.push_back(SimpleParticle_t(0, Jet1));
-            Jet2.SetPtEtaPhiM(Jet_pt[jet2index],Jet_eta[jet2index],Jet_phi[jet2index],Jet_mass[jet2index]);
+
+            Jet2.SetPtEtaPhiM(
+                Jet_pt[jet2index],
+                Jet_eta[jet2index],
+                Jet_phi[jet2index],
+                Jet_mass[jet2index]
+            );
             associated.push_back(SimpleParticle_t(0, Jet2));
         }
     }
@@ -1173,6 +1252,7 @@ bool H4LTools::ZZSelection(){
 
         Z1 = Zlist[bestZIdx];
         Z1nofsr = Zlistnofsr[bestZIdx];
+        Z1flav= Zflavor[bestZIdx];
 
         pTL1 = Zlep1pt[bestZIdx];
         etaL1 = Zlep1eta[bestZIdx];
@@ -1185,9 +1265,9 @@ bool H4LTools::ZZSelection(){
         massL2 = Zlep2mass[bestZIdx];
 
         // -------Check data/MC agreement in 2l2j mode------
-        //if(Z1.Pt() <= 40.0){
-        //    return false;
-        //}
+        if(Z1.Pt() <= 40.0){
+            return false;
+        }
         // --------------------------------------------------
 
         if(nRawJetsThisEvent >= 2){

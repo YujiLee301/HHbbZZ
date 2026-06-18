@@ -190,9 +190,11 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("btagger1_DJ", "F")
         self.out.branch("btagger1_PN", "F")
         self.out.branch("btagger1_RPT", "F")
+        self.out.branch("btagger1_UPT", "F")
         self.out.branch("btagger2_DJ", "F")
         self.out.branch("btagger2_PN", "F")
         self.out.branch("btagger2_RPT", "F")
+        self.out.branch("btagger2_UPT", "F")
         self.out.branch("invjj", "F")
 
         self.out.branch("GENmass2j", "F")
@@ -239,6 +241,7 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("goodJet_phi", "F", lenVar="ngoodJets")
         self.out.branch("goodJet_mass", "F", lenVar="ngoodJets")
         self.out.branch("goodJet_btagRPT", "F", lenVar="ngoodJets")
+        self.out.branch("goodJet_btagUPT", "F", lenVar="ngoodJets")
         self.out.branch("GENjet_hadronFlavour", "I", lenVar="nGenJet")
         self.out.branch("GENjet_Hindex", "I", lenVar="GENHjetNum")
         self.out.branch("nTightEle", "I")
@@ -254,6 +257,7 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("eventPassTwoGoodJets", "O")
         self.out.branch("eventPassDijet", "O")
         self.out.branch("eventPassFinal", "O")
+        self.out.branch("Z1flav","I")
 
         self.out.branch("nZCand", "I")
 #---------------------------------------------------------------------
@@ -349,10 +353,12 @@ class HZZAnalysisCppProducer(Module):
         btagger1_DJ = -999
         btagger1_PN = -999
         btagger1_RPT = -999
+        btagger1_UPT = -999
 
         btagger2_DJ = -999
         btagger2_PN = -999
         btagger2_RPT = -999
+        btagger2_UPT = -999
 
         invjj = -999
 
@@ -367,6 +373,7 @@ class HZZAnalysisCppProducer(Module):
         GENmj2 = -99
         nTightEle = 0
         nTightMu = 0
+        Z1flav = 0
         
         pTL1 = -99
         etaL1 = -99
@@ -401,7 +408,15 @@ class HZZAnalysisCppProducer(Module):
         muons = Collection(event, "Muon")
         fsrPhotons = Collection(event, "FsrPhoton")
         jets = Collection(event, "Jet")
+        
+        branches = {b.GetName() for b in event._tree.GetListOfBranches()}
 
+        hasRPT = "Jet_btagRobustParTAK4B" in branches
+        hasUPT = "Jet_btagUParTAK4B" in branches
+
+        preferUPT = (int(self.year) == 2024) or (self.nanoVersion == 15)
+        useUPT = hasUPT and (preferUPT or not hasRPT)
+        
         if isMC:
             nGenPart = event.nGenPart
             genparts = Collection(event, "GenPart")
@@ -421,18 +436,23 @@ class HZZAnalysisCppProducer(Module):
 
         branches = [b.GetName() for b in event._tree.GetListOfBranches()]
         
-        hasHZZ = "Electron_mvaHZZIso" in branches
+        #hasHZZ = "Electron_mvaHZZIso" in branches
+        hasNoIso = "Electron_mvaNoIso" in branches
         hasWPHZZ = "Electron_mvaIso_WPHZZ" in branches
         hasDeltaEtaSC = "Electron_deltaEtaSC" in branches
         for xe in electrons:
             
             deltaEtaSC = xe.deltaEtaSC if hasDeltaEtaSC else 0.
-            mvaHZZIso = xe.mvaHZZIso if hasHZZ else -999.
+            #mvaHZZIso = xe.mvaHZZIso if hasHZZ else -999.
+            mvaNoIso = xe.mvaNoIso if hasNoIso else -999.
             mvaIso_WPHZZ = bool(xe.mvaIso_WPHZZ) if hasWPHZZ else False
 
             self.worker.SetElectrons(
                 xe.pt, xe.eta, xe.phi, xe.mass, xe.dxy, xe.dz, xe.sip3d,
-                deltaEtaSC, mvaHZZIso, mvaIso_WPHZZ,
+                deltaEtaSC, 
+                #mvaHZZIso, 
+                mvaNoIso,
+                mvaIso_WPHZZ,
                 xe.pdgId, xe.pfRelIso03_all
             )
         
@@ -474,9 +494,15 @@ class HZZAnalysisCppProducer(Module):
             )
 
         for xj in jets:
+            btagDeepFlavB = xj.btagDeepFlavB if "Jet_btagDeepFlavB" in branches else -999.
+            btagPNetB = xj.btagPNetB if "Jet_btagPNetB" in branches else -999.
+            
+            btagRPT = xj.btagRobustParTAK4B if hasRPT else -999.
+            btagUPT = xj.btagUParTAK4B if hasUPT else -999.
+
             self.worker.SetJets(
                 xj.pt, xj.eta, xj.phi, xj.mass, xj.jetId,
-                xj.btagDeepFlavB, xj.btagPNetB, xj.btagRobustParTAK4B, 0.8, 7
+                btagDeepFlavB, btagPNetB, btagRPT, btagUPT, 0.8, 7
             )
 
         self.worker.BatchFsrRecovery_Run3()
@@ -535,12 +561,22 @@ class HZZAnalysisCppProducer(Module):
         goodJet_phi = []
         goodJet_mass = []
         goodJet_btagRPT = []
+        goodJet_btagUPT = []
         for idx in goodJet_idxs:
             goodJet_pt.append(jets[idx].pt)
             goodJet_eta.append(jets[idx].eta)
             goodJet_phi.append(jets[idx].phi)
             goodJet_mass.append(jets[idx].mass)
-            goodJet_btagRPT.append(jets[idx].btagRobustParTAK4B)
+            
+            if hasRPT:
+                goodJet_btagRPT.append(jets[idx].btagRobustParTAK4B)
+            else:
+                goodJet_btagRPT.append(-999.)
+
+            if hasUPT:
+                goodJet_btagUPT.append(jets[idx].btagUParTAK4B)
+            else:
+                goodJet_btagUPT.append(-999.)
 
         GENlep_id = []
         GENlep_Hindex = []
@@ -664,6 +700,7 @@ class HZZAnalysisCppProducer(Module):
             etaZ1 = self.worker.Z1.Eta()
             phiZ1 = self.worker.Z1.Phi()
             massZ1 = self.worker.Z1.M()
+            Z1flav = int(self.worker.Z1flav)
 
             # no second Z / no 4l discriminants in 2l2j
             pTZ2 = -99.
@@ -725,9 +762,12 @@ class HZZAnalysisCppProducer(Module):
             btagger1_DJ = self.worker.btagger1_DJ
             btagger1_PN = self.worker.btagger1_PN
             btagger1_RPT = self.worker.btagger1_RPT
+            btagger1_UPT = self.worker.btagger1_UPT
+            
             btagger2_DJ = self.worker.btagger2_DJ
             btagger2_PN = self.worker.btagger2_PN
             btagger2_RPT = self.worker.btagger2_RPT
+            btagger2_UPT = self.worker.btagger2_UPT
 
             invjj = self.worker.invjj
 
@@ -825,9 +865,11 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("btagger1_DJ", btagger1_DJ)
         self.out.fillBranch("btagger1_PN", btagger1_PN)
         self.out.fillBranch("btagger1_RPT", btagger1_RPT)
+        self.out.fillBranch("btagger1_UPT", btagger1_UPT)
         self.out.fillBranch("btagger2_DJ", btagger2_DJ)
         self.out.fillBranch("btagger2_PN", btagger2_PN)
         self.out.fillBranch("btagger2_RPT", btagger2_RPT)
+        self.out.fillBranch("btagger2_UPT", btagger2_UPT)
         self.out.fillBranch("invjj", invjj)
         self.out.fillBranch("GENmass2j", GENmass2j)
         self.out.fillBranch("GENpTj1", GENpTj1)
@@ -863,10 +905,12 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("goodJet_phi", goodJet_phi)
         self.out.fillBranch("goodJet_mass", goodJet_mass)
         self.out.fillBranch("goodJet_btagRPT", goodJet_btagRPT)
+        self.out.fillBranch("goodJet_btagUPT", goodJet_btagUPT)
         self.out.fillBranch("GENjet_hadronFlavour", GENjet_hadronFlavour)
         self.out.fillBranch("GENjet_Hindex", GENjet_Hindex)
         self.out.fillBranch("nTightEle", self.worker.nTightEle)
         self.out.fillBranch("nTightMu", self.worker.nTightMu)
+        self.out.fillBranch("Z1flav",Z1flav)
         
 #------------2l2j specific branches -- IGNORE for 4l/4l2j analysis ----
         self.out.fillBranch("eventPassTwoTightLeps", eventPassTwoTightLeps)
