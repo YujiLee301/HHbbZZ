@@ -140,7 +140,7 @@ class H4LTools {
       void SetMuons(float Muon_pt_, float Muon_eta_, float Muon_phi_, float Muon_mass_, bool Muon_isGlobal_, bool Muon_isTracker_,
                         float Muon_dxy_, float Muon_dz_,float Muon_sip3d_, float Muon_ptErr_,
                         bool Muon_looseId_, bool Muon_mediumId_, bool Muon_tightId_, 
-                        unsigned char Muon_mvaLowPtId_, unsigned char Muon_mvaId_, unsigned char Muon_mvaLowPt_,
+                        unsigned char Muon_mvaLowPtId_, unsigned char Muon_mvaId_, float Muon_mvaLowPt_,
                         int Muon_nTrackerLayers_, bool Muon_isPFcand_, int Muon_pdgId_,int Muon_charge_, float Muon_pfRelIso03_all_
                         ){
         Muon_pt.push_back(Muon_pt_); 
@@ -448,7 +448,8 @@ class H4LTools {
       std::vector<int> Muon_nTrackerLayers,Muon_genPartIdx,Muon_pdgId,Muon_charge;
       std::vector<bool> Muon_isTracker,Muon_isGlobal,Muon_isPFcand;
       std::vector<bool> Muon_looseId,Muon_mediumId,Muon_tightId;
-      std::vector<unsigned char> Muon_mvaLowPtId,Muon_mvaId,Muon_mvaLowPt;
+      std::vector<unsigned char> Muon_mvaLowPtId,Muon_mvaId;
+      std::vector<float> Muon_mvaLowPt;
 
       std::vector<float> FsrPhoton_dROverEt2, FsrPhoton_phi, FsrPhoton_pt, FsrPhoton_relIso03, FsrPhoton_eta, FsrPhoton_muonIdx, FsrPhoton_electronIdx;
 

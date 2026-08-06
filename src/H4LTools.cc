@@ -70,9 +70,10 @@ std::vector<bool> H4LTools::pass_Ele_Id(int nanoVersion){
         // Use SC eta as in ZZAnalysis-style electron BDT definition
         float fSCeta = fabs(Electron_eta[i] + Electron_deltaEtaSC[i]);
 
-        if (nanoVersion < 14){
+        //if (nanoVersion < 14){
             // Run3 NanoAODv12/v13 style:
             // Electron_mvaHZZIso + hand cuts
+            
             if(Electron_pt[i]<10){
                 if(fSCeta<0.8) cutVal = eleBDTWPLELP;
                 if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMELP;
@@ -83,15 +84,20 @@ std::vector<bool> H4LTools::pass_Ele_Id(int nanoVersion){
                 if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMEHP;
                 if(fSCeta>=1.479) cutVal = eleBDTWPHEHP;
             }
+            
             //mvaVal = Electron_mvaHZZIso[i];
             mvaVal = Electron_mvaNoIso[i];
             passid.push_back(mvaVal > cutVal);
-        }
-        else{
+            //passid.push_back(Electron_mvaIso_WP90[i]);
+            //passid.push_back(Electron_mvaNoIso_WP90[i]);
+        //}
+        //else{
             // Run3 NanoAODv14+ style:
             // use predefined HZZ working point
-            passid.push_back(Electron_mvaIso_WPHZZ[i]);
-        }
+            //passid.push_back(Electron_mvaIso_WPHZZ[i]);
+            //passid.push_back(Electron_mvaIso_WP90[i]);
+            //passid.push_back(Electron_mvaNoIso_WP90[i]);
+        //}
     }
 
     return passid;
@@ -193,29 +199,25 @@ std::vector<unsigned int> H4LTools::SelectedJets(std::vector<unsigned int> ele, 
             if(Jet_jetId[i] > 0){
                 nJetIdJetsThisEvent++;
 
-                // step 3: puId or high-pt
-                if((Jet_pt[i] > 50) || (Jet_puId[i] == 7)){
-                    nPuIdJetsThisEvent++;
+                // step 3: lepton cleaning
+                int overlaptag = 0;
+                TLorentzVector jettest;
+                jettest.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
 
-                    // step 4: lepton cleaning
-                    int overlaptag = 0;
-                    TLorentzVector jettest;
-                    jettest.SetPtEtaPhiM(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
-
-                    for(unsigned int ie=0; ie<ele.size(); ie++){
-                        TLorentzVector eletest;
-                        eletest.SetPtEtaPhiM(Electron_pt[ele[ie]], Electron_eta[ele[ie]], Electron_phi[ele[ie]], Electron_mass[ele[ie]]);
-                        if(eletest.DeltaR(jettest) < 0.4) overlaptag++;
-                    }
-
-                    for(unsigned int im=0; im<mu.size(); im++){
-                        TLorentzVector mutest;
-                        mutest.SetPtEtaPhiM(Muon_pt[mu[im]], Muon_eta[mu[im]], Muon_phi[mu[im]], Muon_mass[mu[im]]);
-                        if(mutest.DeltaR(jettest) < 0.4) overlaptag++;
-                    }
-
-                    if(overlaptag == 0) goodJets.push_back(i);
+                for(unsigned int ie=0; ie<ele.size(); ie++){
+                    TLorentzVector eletest;
+                    eletest.SetPtEtaPhiM(Electron_pt[ele[ie]], Electron_eta[ele[ie]], Electron_phi[ele[ie]], Electron_mass[ele[ie]]);
+                    if(eletest.DeltaR(jettest) < 0.4) overlaptag++;
                 }
+
+                for(unsigned int im=0; im<mu.size(); im++){
+                    TLorentzVector mutest;
+                    mutest.SetPtEtaPhiM(Muon_pt[mu[im]], Muon_eta[mu[im]], Muon_phi[mu[im]], Muon_mass[mu[im]]);
+                    if(mutest.DeltaR(jettest) < 0.4) overlaptag++;
+                }
+
+                if(overlaptag == 0) goodJets.push_back(i);
+                
             }
         }
     }

@@ -260,7 +260,26 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("Z1flav","I")
 
         self.out.branch("nZCand", "I")
-#---------------------------------------------------------------------
+
+# ---------Extra recovered jets for original 1-jet events------------
+        if self.analysisMode == "4l":
+            
+            self.out.branch("nRecoverJets", "I")
+            self.out.branch("eventHasRecoverJet", "O")
+            self.out.branch("njets_recovered", "I")
+        
+            self.out.branch("recoverJet_pt", "F", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_eta", "F", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_phi", "F", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_mass", "F", lenVar="nRecoverJets")
+
+            self.out.branch("recoverJet_btagRPT", "F", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_btagUPT", "F", lenVar="nRecoverJets")
+
+            self.out.branch("recoverJet_mjjWithGoodJet", "F", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_passBtag", "O", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_passMjj", "O", lenVar="nRecoverJets")
+            self.out.branch("recoverJet_idx", "I", lenVar="nRecoverJets")
 
 
         with open("SyncLepton2018GGH.txt", 'w') as f:
@@ -470,14 +489,13 @@ class HZZAnalysisCppProducer(Module):
 
             mvaLowPtId = int(xm.mvaLowPtId) if hasLowPtId else 0
             mvaId = int(xm.mvaId) if hasMvaId else 0
-            mvaLowPt = int(xm.mvaLowPt) if hasLowPt else 0
+            mvaLowPt = float(xm.mvaLowPt) if hasLowPt else -999.
             
             if mvaLowPtId < 0:
                 mvaLowPtId = 0
             if mvaId < 0:
                 mvaId = 0
-            if mvaLowPt < 0:
-                mvaLowPt = 0
+
 
             self.worker.SetMuons(
                 xm.pt, xm.eta, xm.phi, xm.mass, xm.isGlobal, xm.isTracker,
@@ -577,6 +595,23 @@ class HZZAnalysisCppProducer(Module):
                 goodJet_btagUPT.append(jets[idx].btagUParTAK4B)
             else:
                 goodJet_btagUPT.append(-999.)
+                
+        recoverJet_pt = []
+        recoverJet_eta = []
+        recoverJet_phi = []
+        recoverJet_mass = []
+
+        recoverJet_btagRPT = []
+        recoverJet_btagUPT = []
+
+        recoverJet_mjjWithGoodJet = []
+        recoverJet_passBtag = []
+        recoverJet_passMjj = []
+        recoverJet_idx = []
+
+        nRecoverJets = 0
+        eventHasRecoverJet = False
+        njets_recovered = -1
 
         GENlep_id = []
         GENlep_Hindex = []
@@ -633,6 +668,183 @@ class HZZAnalysisCppProducer(Module):
         foundZZCandidate = False
         if hasTwoTightLeps:
             foundZZCandidate = self.worker.ZZSelection()
+        
+        # ============================================================
+        # Extra jet recovery for original 1-jet events
+        #
+        # goodJet_idxs:
+        #   framework-selected jets from self.worker.jetidx
+        #
+        # recoverJet_*:
+        #   extra jets scanned directly from all raw Jet objects
+        #
+        # Candidate:
+        #   - not already in goodJet_idxs
+        #   - pass btag condition OR mjj condition
+        #   - not overlapping with any of the four final selected leptons
+        # ============================================================
+
+        UPART_LOOSE_WP = 0.0246
+        RPT_LOOSE_REF = 0.0246
+
+        MJJ_RECOVER_LOW = 50.0
+        MJJ_RECOVER_HIGH = 180.0
+
+
+        def pass_framework_jet_id(jetId):
+            # Match current H4LTools::SelectedJets logic:
+            # if (Jet_jetId[i] > 0)
+            return int(jetId) > 0
+
+        def pass_tight_lepton_cleaning(jet):
+
+            jetvec = ROOT.TLorentzVector()
+            jetvec.SetPtEtaPhiM(
+                jet.pt,
+                jet.eta,
+                jet.phi,
+                jet.mass
+            )
+
+            # =========================================================
+            # Use final selected H->ZZ->4l leptons only
+            #
+            # self.worker.pTL1-4 etc. are filled after ZZSelection()
+            #
+            # These are the four leptons entering final 4l candidate.
+            # =========================================================
+
+            final_leptons = [
+                (
+                    self.worker.pTL1,
+                    self.worker.etaL1,
+                    self.worker.phiL1,
+                    self.worker.massL1
+                ),
+                (
+                    self.worker.pTL2,
+                    self.worker.etaL2,
+                    self.worker.phiL2,
+                    self.worker.massL2
+                ),
+                (
+                    self.worker.pTL3,
+                    self.worker.etaL3,
+                    self.worker.phiL3,
+                    self.worker.massL3
+                ),
+                (
+                    self.worker.pTL4,
+                    self.worker.etaL4,
+                    self.worker.phiL4,
+                    self.worker.massL4
+                ),
+            ]
+
+
+            for pt, eta, phi, mass in final_leptons:
+
+                # protect unfilled values
+                if pt < 0:
+                    continue
+
+
+                lepvec = ROOT.TLorentzVector()
+
+                lepvec.SetPtEtaPhiM(
+                    pt,
+                    eta,
+                    phi,
+                    mass
+                )
+
+
+                if jetvec.DeltaR(lepvec) < 0.4:
+                    return False
+
+
+            return True
+
+        def dijet_mass(j1, j2):
+            v1 = ROOT.TLorentzVector()
+            v2 = ROOT.TLorentzVector()
+
+            v1.SetPtEtaPhiM(j1.pt, j1.eta, j1.phi, j1.mass)
+            v2.SetPtEtaPhiM(j2.pt, j2.eta, j2.phi, j2.mass)
+
+            return (v1 + v2).M()
+
+
+        goodJet_idx_set = set([int(x) for x in goodJet_idxs])
+
+        # Only recover current original 1-jet events after 4l selection
+        if (self.analysisMode == "4l" and foundZZCandidate and len(goodJet_idxs) == 1):
+
+            kept_idx = int(goodJet_idxs[0])
+            kept_jet = jets[kept_idx]
+
+            for ij, xj in enumerate(jets):
+
+                # Do not recover the jet already selected by framework
+                if ij in goodJet_idx_set:
+                    continue
+
+                if not pass_tight_lepton_cleaning(xj):
+                    continue
+
+                if not pass_framework_jet_id(xj.jetId):
+                    continue
+
+
+                # btag values
+                btagRPT = xj.btagRobustParTAK4B if hasRPT else -999.
+                btagUPT = xj.btagUParTAK4B if hasUPT else -999.
+
+                # ----------------------------------------------------
+                # btag recovery condition
+                #
+                # useUPT was already defined earlier:
+                #   2024 / NanoAODv15 -> UParT
+                #   2022/2023         -> RobustParT
+                # ----------------------------------------------------
+                if useUPT:
+                    pass_btag = btagUPT > UPART_LOOSE_WP
+                elif hasRPT:
+                    pass_btag = btagRPT > RPT_LOOSE_REF
+                else:
+                    pass_btag = False
+
+                # ----------------------------------------------------
+                # mjj recovery condition
+                # ----------------------------------------------------
+                mjj = dijet_mass(kept_jet, xj)
+
+                pass_mjj = (
+                    mjj > MJJ_RECOVER_LOW
+                    and mjj < MJJ_RECOVER_HIGH
+                )
+
+                # Save recovered jet if either condition is satisfied
+                if not (pass_btag or pass_mjj):
+                    continue
+
+                recoverJet_pt.append(xj.pt)
+                recoverJet_eta.append(xj.eta)
+                recoverJet_phi.append(xj.phi)
+                recoverJet_mass.append(xj.mass)
+
+                recoverJet_btagRPT.append(btagRPT)
+                recoverJet_btagUPT.append(btagUPT)
+
+                recoverJet_mjjWithGoodJet.append(mjj)
+                recoverJet_passBtag.append(pass_btag)
+                recoverJet_passMjj.append(pass_mjj)
+                recoverJet_idx.append(ij)
+
+
+        nRecoverJets = len(recoverJet_pt)
+        eventHasRecoverJet = nRecoverJets > 0
+        njets_recovered = len(goodJet_idxs) + nRecoverJets
         
         eventPassTwoTightLeps = bool(self.worker.eventPassTwoTightLeps)
         eventPassZCand = bool(self.worker.eventPassZCand)
@@ -924,7 +1136,25 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("eventPassFinal", eventPassFinal)
 
         self.out.fillBranch("nZCand", nZCand)
-#---------------------------------------------------------------------
+# ---------Extra recovered jets for original 1-jet events------------
+        if self.analysisMode == "4l":
+            self.out.fillBranch("nRecoverJets", nRecoverJets)
+            self.out.fillBranch("eventHasRecoverJet", eventHasRecoverJet)
+            self.out.fillBranch("njets_recovered", njets_recovered)
+
+            self.out.fillBranch("recoverJet_pt", recoverJet_pt)
+            self.out.fillBranch("recoverJet_eta", recoverJet_eta)
+            self.out.fillBranch("recoverJet_phi", recoverJet_phi)
+            self.out.fillBranch("recoverJet_mass", recoverJet_mass)
+
+            self.out.fillBranch("recoverJet_btagRPT", recoverJet_btagRPT)
+            self.out.fillBranch("recoverJet_btagUPT", recoverJet_btagUPT)
+
+            self.out.fillBranch("recoverJet_mjjWithGoodJet", recoverJet_mjjWithGoodJet)
+            self.out.fillBranch("recoverJet_passBtag", recoverJet_passBtag)
+            self.out.fillBranch("recoverJet_passMjj", recoverJet_passMjj)
+            self.out.fillBranch("recoverJet_idx", recoverJet_idx)
+        
 
         """with open("SyncLepton2018GGH.txt", 'a') as f:
             if(foundZZCandidate):

@@ -12,7 +12,7 @@ keep BeamSpot*
 # keep GenFilter*
 # keep nGenJetAK8
 # keep GenJetAK8*
-# keep nGenJet
+keep nGenJet
 # keep GenJet*
 # keep nGenPart
 keep GenPart*
@@ -21,7 +21,7 @@ keep GenPart*
 # keep Generator*
 # keep GenV*
 # keep gen*
-# keep Gen*
+keep Gen*
 keep GENjet_hadronFlavour
 keep LHE*
 keep nLHE*
@@ -64,6 +64,11 @@ keep btag*
 # keep IsoTrack*
 keep nJet
 keep Jet*
+keep ngoodJets
+keep nRecoverJets
+keep eventHasRecoverJet
+keep njets_recovered
+keep recoverJet_*
 #
 #
 # keep GenMET*
