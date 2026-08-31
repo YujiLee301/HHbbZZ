@@ -372,7 +372,7 @@ class H4LTools {
         ZZsystem.SetPtEtaPhiM(0,0,0,0);
         ZZsystemnofsr.SetPtEtaPhiM(0,0,0,0);
         nElectron = 0; nMuon = 0; nJet = 0; nFsrPhoton = 0; nGenPart = 0; nGenJet = 0;
-        nTightEle = 0; nTightMu = 0; nTightEleChgSum = 0; nTightMuChgSum = 0; Z1flav = 0;
+        nTightEle = 0; nTightMu = 0; nTightEleChgSum = 0; nTightMuChgSum = 0; Z1flav = 0; Zsize = 0;
         Lepointer = 0; 
         
         nRawJetsThisEvent = 0;

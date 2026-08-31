@@ -221,8 +221,8 @@ class HZZAnalysisCppProducer(Module):
         GENHlepNum = 4
         GENZNum = 2
         GENHjetNum = 2
-        self.out.branch("GENlep_MomId", "I", lenVar="nGenPart")
-        self.out.branch("GENlep_MomMomId", "I", lenVar="nGenPart")
+        self.out.branch("GENlep_MomId", "I", lenVar="nGENLeptons")
+        self.out.branch("GENlep_MomMomId", "I", lenVar="nGENLeptons")
         self.out.branch("GENZ_MomId", "I", lenVar="nVECZ")
         self.out.branch("GENZ_DaughtersId", "I", lenVar="GENZNum")
         self.out.branch("GENlep_Hindex", "I", lenVar="GENHlepNum")
@@ -433,7 +433,7 @@ class HZZAnalysisCppProducer(Module):
         hasRPT = "Jet_btagRobustParTAK4B" in branches
         hasUPT = "Jet_btagUParTAK4B" in branches
 
-        preferUPT = (int(self.year) == 2024) or (self.nanoVersion == 15)
+        preferUPT = (self.nanoVersion >= 15)
         useUPT = hasUPT and (preferUPT or not hasRPT)
         
         if isMC:
@@ -953,12 +953,14 @@ class HZZAnalysisCppProducer(Module):
                 etaL1, etaL2 = etaL2, etaL1
                 phiL1, phiL2 = phiL2, phiL1
                 massL1, massL2 = massL2, massL1
+                lep_Hindex[0], lep_Hindex[1] = lep_Hindex[1], lep_Hindex[0]
 
             if pTL4 > pTL3:
                 pTL3, pTL4 = pTL4, pTL3
                 etaL3, etaL4 = etaL4, etaL3
                 phiL3, phiL4 = phiL4, phiL3
                 massL3, massL4 = massL4, massL3
+                lep_Hindex[2], lep_Hindex[3] = lep_Hindex[3], lep_Hindex[2]
 
         if self.analysisMode in ["2l2j", "4l2j"] and foundZZCandidate:
             pTj1 = self.worker.pTj1
@@ -992,20 +994,20 @@ class HZZAnalysisCppProducer(Module):
 
         njets_pt30_eta4p7 = self.worker.njets_pt30_eta4p7
 
-        if self.worker.flag4e:
-            mass4e = mass4l
-        if self.worker.flag2e2mu:
-            mass2e2mu = mass4l
-        if self.worker.flag4mu:
-            mass4mu = mass4l
-
         if self.analysisMode in ["4l", "4l2j"] and (self.worker.isFSR == False and passedFullSelection):
             pT4l = self.worker.ZZsystemnofsr.Pt()
             eta4l = self.worker.ZZsystemnofsr.Eta()
             phi4l = self.worker.ZZsystemnofsr.Phi()
             mass4l = self.worker.ZZsystemnofsr.M()
             rapidity4l = self.worker.ZZsystemnofsr.Rapidity()
-
+            
+        if self.worker.flag4e:
+            mass4e = mass4l
+        if self.worker.flag2e2mu:
+            mass2e2mu = mass4l
+        if self.worker.flag4mu:
+            mass4mu = mass4l
+            
         if self.isMC:
             Weight = event.genWeight * dataMCWeight_new * prefiringWeight
         else:

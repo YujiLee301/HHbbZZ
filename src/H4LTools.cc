@@ -258,7 +258,7 @@ unsigned H4LTools::doFsrRecovery_Run3(std::vector<unsigned int> goodfsridx, unsi
     if(lepflavor == 11){
         for(unsigned fsridx=0; fsridx<goodfsridx.size(); fsridx++){
             if(FsrPhoton_electronIdx[goodfsridx[fsridx]] == lepidx){
-                matchedfsridx = fsridx;
+                matchedfsridx = goodfsridx[fsridx];
                 break;
             }
         }
@@ -266,7 +266,7 @@ unsigned H4LTools::doFsrRecovery_Run3(std::vector<unsigned int> goodfsridx, unsi
     if(lepflavor == 13){
         for(unsigned fsridx=0; fsridx<goodfsridx.size(); fsridx++){
             if(FsrPhoton_muonIdx[goodfsridx[fsridx]] == lepidx){
-                matchedfsridx = fsridx;
+                matchedfsridx = goodfsridx[fsridx];
                 break;
             }
         }
@@ -283,7 +283,12 @@ void H4LTools::BatchFsrRecovery_Run3(){
         lep.SetPtEtaPhiM(Electron_pt[i],Electron_eta[i],Electron_phi[i],Electron_mass[i]);
         fsridx = doFsrRecovery_Run3(fsrlist,i,11);
         if(fsridx<900){
-            fsr.SetPtEtaPhiM(FsrPhoton_pt[fsrlist[fsridx]], FsrPhoton_eta[fsrlist[fsridx]], FsrPhoton_phi[fsrlist[fsridx]], 0);
+            fsr.SetPtEtaPhiM(
+                FsrPhoton_pt[fsridx], 
+                FsrPhoton_eta[fsridx], 
+                FsrPhoton_phi[fsridx], 
+                0
+            );
             lep = lep + fsr;
             Electrondressed_Run3.push_back(lep);
         }
@@ -296,7 +301,12 @@ void H4LTools::BatchFsrRecovery_Run3(){
         lep.SetPtEtaPhiM(Muon_pt[j],Muon_eta[j],Muon_phi[j],Muon_mass[j]);
         fsridx = doFsrRecovery_Run3(fsrlist,j,13);
         if(fsridx<900){
-            fsr.SetPtEtaPhiM(FsrPhoton_pt[fsrlist[fsridx]], FsrPhoton_eta[fsrlist[fsridx]], FsrPhoton_phi[fsrlist[fsridx]], 0);
+            fsr.SetPtEtaPhiM(
+                FsrPhoton_pt[fsridx], 
+                FsrPhoton_eta[fsridx], 
+                FsrPhoton_phi[fsridx], 
+                0
+            );
             lep = lep + fsr;
             Muondressed_Run3.push_back(lep);
         }
@@ -571,7 +581,7 @@ void H4LTools::LeptonSelection(){
         }
     }
     if (analysisMode == "2l2j") {
-        if ((nTightEle + nTightMu) >= 2) {
+        if (nTightEle >= 2 || nTightMu >= 2) {
             eventPassTwoTightLeps = true;
             passTwoTightLeps++;
         }
@@ -839,7 +849,21 @@ bool H4LTools::BuildZZCandidate(){
                if ((Zlep1index[m] == Zlep1index[n])||(Zlep2index[m] == Zlep1index[n])) continue;  //non-overlapping
                if ((Zlep1index[m] == Zlep2index[n])||(Zlep2index[m] == Zlep2index[n])) continue;
             }
-            if (Zlist[m].DeltaR(Zlist[n])<0.02) continue; //ghost removal
+
+            TLorentzVector lep1_m, lep2_m, lep1_n, lep2_n;
+
+            lep1_m.SetPtEtaPhiM(Zlep1ptNoFsr[m], Zlep1etaNoFsr[m], Zlep1phiNoFsr[m], Zlep1massNoFsr[m]);
+            lep2_m.SetPtEtaPhiM(Zlep2ptNoFsr[m], Zlep2etaNoFsr[m], Zlep2phiNoFsr[m], Zlep2massNoFsr[m]);
+            lep1_n.SetPtEtaPhiM(Zlep1ptNoFsr[n], Zlep1etaNoFsr[n], Zlep1phiNoFsr[n], Zlep1massNoFsr[n]);
+            lep2_n.SetPtEtaPhiM(Zlep2ptNoFsr[n], Zlep2etaNoFsr[n], Zlep2phiNoFsr[n], Zlep2massNoFsr[n]);
+
+            if (lep1_m.DeltaR(lep2_m) <= 0.02) continue;
+            if (lep1_m.DeltaR(lep1_n) <= 0.02) continue;
+            if (lep1_m.DeltaR(lep2_n) <= 0.02) continue;
+            if (lep2_m.DeltaR(lep1_n) <= 0.02) continue;
+            if (lep2_m.DeltaR(lep2_n) <= 0.02) continue;
+            if (lep1_n.DeltaR(lep2_n) <= 0.02) continue;//ghost removal
+
             ghosttag++;
             bool nPassPt20;
             int nPassPt10;
@@ -855,7 +879,7 @@ bool H4LTools::BuildZZCandidate(){
             if ((Zlep1chg[m]+Zlep1chg[n])==0){
                 TLorentzVector lepA,lepB,lepAB;
                 lepA.SetPtEtaPhiM(Zlep1ptNoFsr[m],Zlep1etaNoFsr[m],Zlep1phiNoFsr[m],Zlep1massNoFsr[m]);
-                lepB.SetPtEtaPhiM(Zlep2ptNoFsr[n],Zlep2etaNoFsr[n],Zlep2phiNoFsr[n],Zlep2massNoFsr[n]);
+                lepB.SetPtEtaPhiM(Zlep1ptNoFsr[n],Zlep1etaNoFsr[n],Zlep1phiNoFsr[n],Zlep1massNoFsr[n]);
                 lepAB = lepA + lepB;
                 if(lepAB.M()<4) continue;  //QCD Supressionas
             }
@@ -876,7 +900,7 @@ bool H4LTools::BuildZZCandidate(){
             if ((Zlep2chg[m]+Zlep2chg[n])==0){
                 TLorentzVector lepA,lepB,lepAB;
                 lepA.SetPtEtaPhiM(Zlep2ptNoFsr[m],Zlep2etaNoFsr[m],Zlep2phiNoFsr[m],Zlep2massNoFsr[m]);
-                lepB.SetPtEtaPhiM(Zlep1ptNoFsr[n],Zlep1etaNoFsr[n],Zlep1phiNoFsr[n],Zlep1massNoFsr[n]);
+                lepB.SetPtEtaPhiM(Zlep2ptNoFsr[n],Zlep2etaNoFsr[n],Zlep2phiNoFsr[n],Zlep2massNoFsr[n]);
                 lepAB = lepA + lepB;
                 if(lepAB.M()<4) continue;
             }
@@ -923,7 +947,7 @@ bool H4LTools::BuildZZCandidate(){
             if (passSmartCut==false) continue ;
             if (zZ1.M()+zZ2.M()<MZZcut) continue;
             foundZZCandidate = true;
-            if(Zlist[m].M()>Zlist[n].M()){
+            if (fabs(Zlist[m].M() - Zmass) < fabs(Zlist[n].M() - Zmass)){
                 Z1CanIndex.push_back(m);
                 Z2CanIndex.push_back(n);
             }

@@ -481,9 +481,17 @@ class kFactorProducer(Module):
         result["QCD_NLO_dPhi"] = self._kfactor_qqzz_qcd_dPhi(gen_dphi, final_state)
         result["QCD_NLO_Pt"] = self._kfactor_qqzz_qcd_Pt(gen_pt, final_state)
         
-        if sqrt_s_hat is not None and t_hat is not None:
-            result["EWK"] = self._find_ewk_correction(sqrt_s_hat, t_hat, quark_type)
-        
+        if (
+            sqrt_s_hat is not None
+            and sqrt_s_hat > 0
+            and t_hat is not None
+            and t_hat != -1
+        ):
+            result["EWK"] = self._find_ewk_correction(
+                sqrt_s_hat,
+                t_hat,
+                quark_type
+            )
         result["total"] = result["QCD_NNLO"] * result["EWK"]
         
         return result
@@ -493,8 +501,8 @@ class kFactorProducer(Module):
         if not self.apply_kfactor:
             return True
         
-        # Create new GenAnalysis instance for each event
-        self.gen_analyzer = ROOT.GenAnalysis()
+        # Reset GenAnalysis for this event
+        self.gen_analyzer.Initialize()
         
         # Set object numbers first
         try:
@@ -558,31 +566,36 @@ class kFactorProducer(Module):
             self._fill_default_values()
             return True
         
-        # Get variables from GenAnalysis
-        try:
-            gen_mass = self.gen_analyzer.GENmass4l
-            gen_pt = self.gen_analyzer.GENpT4l
-            gen_dphi = self.gen_analyzer.GEN_dPhiZZ
-            final_state = self.gen_analyzer.GEN_final_state
-            quark_type = self.gen_analyzer.GEN_quark_type
-            sqrt_s_hat = self.gen_analyzer.GEN_sqrt_s_hat
-            t_hat = self.gen_analyzer.GEN_t_hat
-        except:
-            self._fill_default_values()
-            return True
-        
-        # Validate kinematics
-        if gen_mass <= 0 or gen_pt < 0 or gen_dphi < 0 or np.isnan(gen_mass):
-            self._fill_default_values()
-            return True
-        
         # Compute k-factors
         if self.is_ggzz:
+            gen_mass = self.gen_analyzer.GENmassZZ
+            
+            if gen_mass <= 0 or np.isnan(gen_mass):
+                self._fill_default_values()
+                return True
             kf = self._compute_ggzz_kfactor(gen_mass)
             for name, value in kf.items():
                 self.out.fillBranch(f"ggZZ_kf_{name}", value)
         
         elif self.is_qqzz:
+            gen_mass = self.gen_analyzer.GENmassZZ
+            gen_pt = self.gen_analyzer.GENpTZZ
+            gen_dphi = self.gen_analyzer.GEN_dPhiZZ
+            final_state = self.gen_analyzer.GEN_final_state
+            quark_type = self.gen_analyzer.GEN_quark_type
+            sqrt_s_hat = self.gen_analyzer.GEN_sqrt_s_hat
+            t_hat = self.gen_analyzer.GEN_t_hat
+            
+            if (
+                gen_mass <= 0
+                or gen_pt < 0
+                or gen_dphi < 0
+                or final_state not in [1, 2]
+                or np.isnan(gen_mass)
+            ):
+                self._fill_default_values()
+                return True
+            
             kf = self._compute_qqzz_kfactor(
                 gen_mass, gen_pt, gen_dphi, final_state,
                 sqrt_s_hat, t_hat, quark_type

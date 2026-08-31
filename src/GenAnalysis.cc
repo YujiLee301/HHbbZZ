@@ -152,9 +152,14 @@ void GenAnalysis::SetGenVariables(){
                 TLorentzVector thisphoton;
                 thisphoton.SetPtEtaPhiM(GenPart_pt[k],GenPart_eta[k],GenPart_phi[k],GenPart_mass[k]);
                 double this_dR_lgamma = thisphoton.DeltaR(lep_dressed);
-                bool idmatch=false;
-                if(GenPart_pdgId[GenPart_genPartIdxMother[k]]==GenPart_pdgId[genpidx]) idmatch=true;
-                if (!idmatch) continue;
+
+                int motherIdx = GenPart_genPartIdxMother[k];
+                if (motherIdx < 0 || motherIdx >= (int)GenPart_pdgId.size()) {
+                    continue;
+                }
+                if (GenPart_pdgId[motherIdx] != GenPart_pdgId[genpidx]) {
+                    continue;
+                }
                 if(this_dR_lgamma<((abs(GenPart_pdgId[genpidx])==11)?genIsoConeSizeEl:genIsoConeSizeMu)) {//Check the value
                     gen_fsrset.insert(k);
                     TLorentzVector gamma;
@@ -238,8 +243,68 @@ void GenAnalysis::SetGenVariables(){
             Z1_2.SetPtEtaPhiM(GENlep_pt[L2_nocuts],GENlep_eta[L2_nocuts],GENlep_phi[L2_nocuts],GENlep_mass[L2_nocuts]);
             Z2_1.SetPtEtaPhiM(GENlep_pt[L3_nocuts],GENlep_eta[L3_nocuts],GENlep_phi[L3_nocuts],GENlep_mass[L3_nocuts]);
             Z2_2.SetPtEtaPhiM(GENlep_pt[L4_nocuts],GENlep_eta[L4_nocuts],GENlep_phi[L4_nocuts],GENlep_mass[L4_nocuts]);
-            GENmassZZ = (Z1_1+Z1_2+Z2_1+Z2_2).M();
-            GENpTZZ = (Z1_1+Z1_2+Z2_1+Z2_2).Pt();
+            
+            TLorentzVector Z1_nocuts = Z1_1 + Z1_2;
+            TLorentzVector Z2_nocuts = Z2_1 + Z2_2;
+            TLorentzVector ZZ_nocuts = Z1_nocuts + Z2_nocuts;
+
+            GENmassZZ = ZZ_nocuts.M();
+            GENpTZZ   = ZZ_nocuts.Pt();
+            GEN_sqrt_s_hat = ZZ_nocuts.M();
+            GEN_dPhiZZ = fabs(Z1_nocuts.DeltaPhi(Z2_nocuts));
+
+            // Calculate t_hat using the no-cut ZZ system
+            if (GEN_sqrt_s_hat > 2 * Zmass) {
+
+                double s_hat = GEN_sqrt_s_hat * GEN_sqrt_s_hat;
+
+                double energy = 6500.0;
+                double pz1 = energy;
+                double pz2 = -energy;
+
+                if (GENmom1.P() > 0 && GENmom2.P() > 0) {
+                    pz1 = GENmom1.Pz();
+                    pz2 = GENmom2.Pz();
+                }
+
+                TLorentzVector p1, p2;
+                p1.SetXYZT(0., 0., pz1, fabs(pz1));
+                p2.SetXYZT(0., 0., pz2, fabs(pz2));
+
+                TVector3 boost_vec = ZZ_nocuts.BoostVector();
+
+                TLorentzVector Z1_cm = Z1_nocuts;
+                TLorentzVector p1_cm = p1;
+                TLorentzVector p2_cm = p2;
+
+                Z1_cm.Boost(-boost_vec);
+                p1_cm.Boost(-boost_vec);
+                p2_cm.Boost(-boost_vec);
+
+                TVector3 z1_dir = Z1_cm.Vect().Unit();
+                TVector3 p1_dir = p1_cm.Vect().Unit();
+                TVector3 p2_dir = p2_cm.Vect().Unit();
+
+                TVector3 diff_p = p1_dir - p2_dir;
+                TVector3 eff_beam_axis = diff_p.Unit();
+
+                double cos_theta = eff_beam_axis.Dot(z1_dir);
+
+                double m_z2 = Zmass * Zmass;
+                double discriminant =
+                    0.25 * s_hat * s_hat - m_z2 * s_hat;
+
+                if (discriminant >= 0) {
+                    GEN_t_hat =
+                        m_z2
+                        - 0.5 * s_hat
+                        + cos_theta * sqrt(discriminant);
+                } else {
+                    GEN_t_hat =
+                        m_z2 - 0.5 * s_hat;
+                }
+            }
+
             if (abs(GENlep_id[L1_nocuts])==abs(GENlep_id[L3_nocuts])) {
                 GEN_final_state = 1;  // 4e or 4mu
             } else {
@@ -316,8 +381,8 @@ void GenAnalysis::SetGenVariables(){
                 }
             }
         }
-        GENlep_Hindex[0] = L1; GENlep_Hindex[1] = L2; GENlep_Hindex[2] = L3; GENlep_Hindex[3] = L4;
         if (passedFiducialSelection) {
+            GENlep_Hindex[0] = L1; GENlep_Hindex[1] = L2; GENlep_Hindex[2] = L3; GENlep_Hindex[3] = L4;
 
             //    TLorentzVector LS3_Z1_1, LS3_Z1_2, LS3_Z2_1, LS3_Z2_2;
             LS3_Z1_1.SetPtEtaPhiM(GENlep_pt[L1],GENlep_eta[L1],GENlep_phi[L1],GENlep_mass[L1]);
@@ -339,75 +404,6 @@ void GenAnalysis::SetGenVariables(){
             GENrapidity4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).Rapidity();
             GENmassZ1 = (LS3_Z1_1+LS3_Z1_2).M();
             GENmassZ2 = (LS3_Z2_1+LS3_Z2_2).M();
-
-            //======= Calculate s_hat and t_hat for EWK =======
-            TLorentzVector ZZ = LS3_Z1_1 + LS3_Z1_2 + LS3_Z2_1 + LS3_Z2_2;
-            GEN_sqrt_s_hat = ZZ.M();
-            
-            // Calculate dPhi between Z1 and Z2 for QCD k-factors
-            TLorentzVector Z1 = LS3_Z1_1 + LS3_Z1_2;
-            TLorentzVector Z2 = LS3_Z2_1 + LS3_Z2_2;
-            GEN_dPhiZZ = abs(Z1.DeltaPhi(Z2));
-            
-            // Calculate t_hat 
-            // Only for on-shell ZZ
-            if (GEN_sqrt_s_hat > 2 * Zmass) {
-                double s_hat = GEN_sqrt_s_hat * GEN_sqrt_s_hat;
-                
-                // Beam energy (13 TeV total, so 6500 GeV per beam)
-                double energy = 6500.0;
-                
-                // Initial state parton momenta (approximate along z-axis)
-                // p1: proton direction (+z), p2: anti-proton direction (-z)
-                // Use actual initial state rapidity if available, otherwise assume head-on
-                double pz1 = energy;
-                double pz2 = -energy;
-                
-                // If we have initial state info, use it for better approximation
-                if (GENmom1.P() > 0 && GENmom2.P() > 0) {
-                    // Use actual initial state directions
-                    pz1 = GENmom1.Pz();
-                    pz2 = GENmom2.Pz();
-                }
-                
-                TLorentzVector p1, p2;
-                p1.SetXYZT(0., 0., pz1, fabs(pz1));  // massless approximation
-                p2.SetXYZT(0., 0., pz2, fabs(pz2));
-                
-                // Boost to CM frame
-                TVector3 boost_vec = ZZ.BoostVector();
-                TLorentzVector Z1_cm = Z1;
-                TLorentzVector p1_cm = p1;
-                TLorentzVector p2_cm = p2;
-                
-                Z1_cm.Boost(-boost_vec);
-                p1_cm.Boost(-boost_vec);
-                p2_cm.Boost(-boost_vec);
-                
-                // Unitary vectors
-                TVector3 z1_dir = Z1_cm.Vect().Unit();
-                TVector3 p1_dir = p1_cm.Vect().Unit();
-                TVector3 p2_dir = p2_cm.Vect().Unit();
-                
-                // Effective beam axis (from p1 - p2 direction)
-                TVector3 diff_p = p1_dir - p2_dir;
-                TVector3 eff_beam_axis = diff_p.Unit();
-                
-                // cos(theta) = angle between Z1 and effective beam axis
-                double cos_theta = eff_beam_axis.Dot(z1_dir);
-                
-                // Calculate t_hat
-                double m_z2 = Zmass * Zmass;
-                double discriminant = 0.25 * s_hat * s_hat - m_z2 * s_hat;
-                
-                if (discriminant >= 0) {
-                    GEN_t_hat = m_z2 - 0.5 * s_hat + cos_theta * sqrt(discriminant);
-                } else {
-                    // Off-shell or numerical issue, set to safe value
-                    GEN_t_hat = m_z2 - 0.5 * s_hat;
-                }
-            }
-            //=========================================================
 
             int tmpIdL1,tmpIdL2,tmpIdL3,tmpIdL4;
             TLorentzVector GENL11P4, GENL12P4, GENL21P4, GENL22P4;
@@ -448,10 +444,12 @@ void GenAnalysis::SetGenVariables(){
                 if(deltaRll<=0.02) { passedDeltaR = false; break; }
             }
         }
-        GENZ_DaughtersId[0] = abs(GENlep_id[GENlep_Hindex[0]]);
-        GENZ_DaughtersId[1] = abs(GENlep_id[GENlep_Hindex[2]]);//Fix me: maybe not correct!
+
         if(passedMassOS==false || passedElMuDeltaR==false || passedDeltaR==false) passedFiducialSelection=false;
          if (passedFiducialSelection) {
+
+            GENZ_DaughtersId[0] = abs(GENlep_id[L1]);
+            GENZ_DaughtersId[1] = abs(GENlep_id[L3]);
             // DO GEN JETS
 
             int GENjet1index=0; int GENjet2index=0; int GENjet1index_2p5=0; int GENjet2index_2p5=0;
@@ -540,9 +538,9 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
 
     double offshell = 999.0; bool findZ1 = false; bool passZ1 = false;
 
-    L1 = 0; L2 = 0;
-
     unsigned int N = GENlep_pt.size();
+
+    L1 = N; L2 = N; L3 = N; L4 = N;
 
     for(unsigned int i=0; i<N; i++){
         for(unsigned int j=i+1; j<N; j++){
@@ -572,6 +570,9 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
                 L1 = i; L2 = j; findZ1 = true; offshell = abs(mZ1-Zmass);
             }
         }
+    }
+    if (!findZ1) {
+        return false;
     }
 
     TLorentzVector l1, l2;
@@ -624,6 +625,9 @@ bool GenAnalysis::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, 
         } // lj
     } // li
 
+    if (!findZ2) {
+        return false;
+    }
     unsigned int tmp_;
     if(GENlep_pt[L1]<GENlep_pt[L2])    {tmp_=L1;    L1=L2;    L2=tmp_;}
     if(GENlep_pt[L3]<GENlep_pt[L4])    {tmp_=L3;    L3=L4;    L4=tmp_;}
