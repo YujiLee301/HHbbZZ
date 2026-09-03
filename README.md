@@ -64,14 +64,6 @@ scramv1 b -j 4
    find PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/.git/ -name "*.py*" -delete
    ```
 
-4. Step: 4: Get the MELA package
-
-   ```bash
-   cd $CMSSW_BASE/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim
-   git clone https://github.com/JHUGen/JHUGenMELA.git JHUGenMELA
-   (cd JHUGenMELA; git checkout -b from-v242 v2.4.2; ./setup.sh)
-   ```
-
 4. Step: 4: interactive running
 
    ```bash

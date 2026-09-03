@@ -110,7 +110,6 @@ keep *j2
 keep pass*
 keep GEN*
 keep njet*
-keep D_*
 keep lep*
 keep invjj
 #keep goodJet*

@@ -25,28 +25,3 @@ cmsenv
 
 #cp PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/data/btag/*.csv PhysicsTools/NanoAODTools/data/btagSF/.
 scram b -j12
-
-cd $CMSSW_BASE/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim
-#MELA
-git clone https://github.com/JHUGen/JHUGenMELA.git JHUGenMELA
-(cd JHUGenMELA; git checkout -b from-v242 v2.4.2; ./setup.sh)
-
-'''
-#MELA Analytics
-git clone https://github.com/MELALabs/MelaAnalytics.git
-(cd MelaAnalytics; git checkout -b from-v23 v2.3; ./setup.sh)
-
-#Move MELA libraries to the proper place, so that we can avoid its silly
-#env settings 
-mkdir -p ${CMSSW_BASE}/lib/${SCRAM_ARCH}
-ln -s ${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/JHUGenMELA/MELA/data/*/*.so \
-      ${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/MelaAnalytics/CandidateLOCaster/lib/*.so \
-      ${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/MelaAnalytics/GenericMEComputer/lib/*.so \
-      ${CMSSW_BASE}/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim/MelaAnalytics/EventContainer/lib/*.so \
-      ${CMSSW_BASE}/lib/${SCRAM_ARCH}
-'''
-
-
-
-
-

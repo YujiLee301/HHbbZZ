@@ -50,9 +50,6 @@ class kFactorProducer(Module):
         print(f"[kFactorProducer] apply_kfactor: {self.apply_kfactor}")
         print(f"{'='*60}\n")
         
-        # Setup library paths and load MELA
-        self._setup_library_paths()
-        
         # Load GenAnalysis
         self._load_genanalysis()
         
@@ -70,32 +67,6 @@ class kFactorProducer(Module):
             print(f"[kFactorProducer] Sample does not require k-factors, skipping file loading")
         
         print(f"[kFactorProducer] Initialization complete\n")
-    
-    def _setup_library_paths(self):
-        """Set up library paths and load MELA library."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        possible_mela_paths = [
-            os.path.join(current_dir, "JHUGenMELA", "MELA", "data", "el9_amd64_gcc12"),
-            os.path.join(current_dir, "JHUGenMELA", "MELA", "data", "slc7_amd64_gcc700"),
-            os.path.join(current_dir, "JHUGenMELA", "MELA", "data", "slc6_amd64_gcc630"),
-            os.path.join(current_dir, "JHUGenMELA", "MELA", "data"),
-        ]
-        
-        for path in possible_mela_paths:
-            if os.path.exists(path):
-                mela_lib = os.path.join(path, "libJHUGenMELAMELA.so")
-                if os.path.exists(mela_lib):
-                    if 'LD_LIBRARY_PATH' in os.environ:
-                        os.environ['LD_LIBRARY_PATH'] = f"{path}:{os.environ['LD_LIBRARY_PATH']}"
-                    else:
-                        os.environ['LD_LIBRARY_PATH'] = path
-                    
-                    try:
-                        ROOT.gSystem.Load(mela_lib)
-                    except:
-                        pass
-                    break
     
     def _load_genanalysis(self):
         """Load GenAnalysis library."""
@@ -504,15 +475,6 @@ class kFactorProducer(Module):
         # Reset GenAnalysis for this event
         self.gen_analyzer.Initialize()
         
-        # Set object numbers first
-        try:
-            n_gen_part = event.nGenPart if hasattr(event, 'nGenPart') else 0
-            n_gen_jet = event.nGenJet if hasattr(event, 'nGenJet') else 0
-            self.gen_analyzer.SetObjectNumGen(n_gen_part, n_gen_jet)
-        except:
-            self._fill_default_values()
-            return True
-        
         # Fill generator particle information
         try:
             genparts = Collection(event, "GenPart")
@@ -529,8 +491,7 @@ class kFactorProducer(Module):
                 
                 self.gen_analyzer.SetGenParts(
                     gp.pt, gp.eta, gp.phi, gp.mass,
-                    gp.pdgId, gp.status, 0,
-                    mother_idx
+                    gp.pdgId, gp.status, mother_idx
                 )
         except:
             self._fill_default_values()
