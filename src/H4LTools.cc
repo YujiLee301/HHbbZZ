@@ -1,6 +1,7 @@
 #include "../interface/H4LTools.h"
 #include <cmath>
 #include <iostream>
+#include "../interface/H4LSelection.h"
 #include <TLorentzVector.h>
 #include <vector>
 
@@ -616,20 +617,26 @@ bool H4LTools::BuildZZCandidate(){
                if ((Zlep1index[m] == Zlep2index[n])||(Zlep2index[m] == Zlep2index[n])) continue;
             }
 
-            TLorentzVector lep1_m, lep2_m, lep1_n, lep2_n;
+            // Apply ghost removal and the low-mass pair veto to the four bare leptons.
+            std::array<h4l::CandidateLepton, 4> fourLeptons;
+            fourLeptons[0].bareP4.SetPtEtaPhiM(
+                Zlep1ptNoFsr[m], Zlep1etaNoFsr[m], Zlep1phiNoFsr[m], Zlep1massNoFsr[m]
+            );
+            fourLeptons[0].charge = Zlep1chg[m];
+            fourLeptons[1].bareP4.SetPtEtaPhiM(
+                Zlep2ptNoFsr[m], Zlep2etaNoFsr[m], Zlep2phiNoFsr[m], Zlep2massNoFsr[m]
+            );
+            fourLeptons[1].charge = Zlep2chg[m];
+            fourLeptons[2].bareP4.SetPtEtaPhiM(
+                Zlep1ptNoFsr[n], Zlep1etaNoFsr[n], Zlep1phiNoFsr[n], Zlep1massNoFsr[n]
+            );
+            fourLeptons[2].charge = Zlep1chg[n];
+            fourLeptons[3].bareP4.SetPtEtaPhiM(
+                Zlep2ptNoFsr[n], Zlep2etaNoFsr[n], Zlep2phiNoFsr[n], Zlep2massNoFsr[n]
+            );
+            fourLeptons[3].charge = Zlep2chg[n];
 
-            lep1_m.SetPtEtaPhiM(Zlep1ptNoFsr[m], Zlep1etaNoFsr[m], Zlep1phiNoFsr[m], Zlep1massNoFsr[m]);
-            lep2_m.SetPtEtaPhiM(Zlep2ptNoFsr[m], Zlep2etaNoFsr[m], Zlep2phiNoFsr[m], Zlep2massNoFsr[m]);
-            lep1_n.SetPtEtaPhiM(Zlep1ptNoFsr[n], Zlep1etaNoFsr[n], Zlep1phiNoFsr[n], Zlep1massNoFsr[n]);
-            lep2_n.SetPtEtaPhiM(Zlep2ptNoFsr[n], Zlep2etaNoFsr[n], Zlep2phiNoFsr[n], Zlep2massNoFsr[n]);
-
-            if (lep1_m.DeltaR(lep2_m) <= 0.02) continue;
-            if (lep1_m.DeltaR(lep1_n) <= 0.02) continue;
-            if (lep1_m.DeltaR(lep2_n) <= 0.02) continue;
-            if (lep2_m.DeltaR(lep1_n) <= 0.02) continue;
-            if (lep2_m.DeltaR(lep2_n) <= 0.02) continue;
-            if (lep1_n.DeltaR(lep2_n) <= 0.02) continue;//ghost removal
-
+            if (!h4l::passesGhostRemoval(fourLeptons)) continue;
             ghosttag++;
             bool nPassPt20;
             int nPassPt10;
@@ -642,46 +649,16 @@ bool H4LTools::BuildZZCandidate(){
             if (nPassPt10 < 2) continue;
             if (nPassPt20 == false) continue; //lep Pt requirements
             lepPtTag++;
-            if ((Zlep1chg[m]+Zlep1chg[n])==0){
-                TLorentzVector lepA,lepB,lepAB;
-                lepA.SetPtEtaPhiM(Zlep1ptNoFsr[m],Zlep1etaNoFsr[m],Zlep1phiNoFsr[m],Zlep1massNoFsr[m]);
-                lepB.SetPtEtaPhiM(Zlep1ptNoFsr[n],Zlep1etaNoFsr[n],Zlep1phiNoFsr[n],Zlep1massNoFsr[n]);
-                lepAB = lepA + lepB;
-                if(lepAB.M()<4) continue;  //QCD Supressionas
-            }
-            if ((Zlep1chg[m]+Zlep2chg[n])==0){
-                TLorentzVector lepA,lepB,lepAB;
-                lepA.SetPtEtaPhiM(Zlep1ptNoFsr[m],Zlep1etaNoFsr[m],Zlep1phiNoFsr[m],Zlep1massNoFsr[m]);
-                lepB.SetPtEtaPhiM(Zlep2ptNoFsr[n],Zlep2etaNoFsr[n],Zlep2phiNoFsr[n],Zlep2massNoFsr[n]);
-                lepAB = lepA + lepB;
-                if(lepAB.M()<4) continue;
-            }
-            if ((Zlep2chg[m]+Zlep1chg[n])==0){
-                TLorentzVector lepA,lepB,lepAB;
-                lepA.SetPtEtaPhiM(Zlep2ptNoFsr[m],Zlep2etaNoFsr[m],Zlep2phiNoFsr[m],Zlep2massNoFsr[m]);
-                lepB.SetPtEtaPhiM(Zlep1ptNoFsr[n],Zlep1etaNoFsr[n],Zlep1phiNoFsr[n],Zlep1massNoFsr[n]);
-                lepAB = lepA + lepB;
-                if(lepAB.M()<4) continue;
-            }
-            if ((Zlep2chg[m]+Zlep2chg[n])==0){
-                TLorentzVector lepA,lepB,lepAB;
-                lepA.SetPtEtaPhiM(Zlep2ptNoFsr[m],Zlep2etaNoFsr[m],Zlep2phiNoFsr[m],Zlep2massNoFsr[m]);
-                lepB.SetPtEtaPhiM(Zlep2ptNoFsr[n],Zlep2etaNoFsr[n],Zlep2phiNoFsr[n],Zlep2massNoFsr[n]);
-                lepAB = lepA + lepB;
-                if(lepAB.M()<4) continue;
-            }
+            if (!h4l::passesOppositeSignPairMass(fourLeptons)) continue;
             QCDtag++;
-            if ((Zlist[m].M()<40) && (Zlist[n].M()<40))  continue; //Z1 mass
 
-            TLorentzVector zZ1,zZ2;
-            if (fabs(Zlist[m].M()-Zmass)<fabs(Zlist[n].M()-Zmass)){
-                zZ1 = Zlist[m];
-                zZ2 = Zlist[n];
-            }
-            else{
-                zZ1 = Zlist[n];
-                zZ2 = Zlist[m];
-            }
+            const std::pair<unsigned int, unsigned int> orderedZs =
+                h4l::orderZCandidates(m, n, Zlist[m], Zlist[n], Zmass);
+            const unsigned int z1Index = orderedZs.first;
+            const unsigned int z2Index = orderedZs.second;
+            const TLorentzVector& zZ1 = Zlist[z1Index];
+            const TLorentzVector& zZ2 = Zlist[z2Index];
+            if (!h4l::passesZ1Mass(zZ1, MZ1cut)) continue;
 
             bool passSmartCut = true;
             if (Zflavor[m]==Zflavor[n]){
@@ -702,23 +679,18 @@ bool H4LTools::BuildZZCandidate(){
                     Zb = lepN2 + lepM2;
                 }
                 if (fabs(Za.M()-Zmass)<fabs(Zb.M()-Zmass)){
-                    if ( (fabs(Za.M()-Zmass)<abs(zZ1.M()-Zmass)) && (Zb.M()<12) ) passSmartCut=false;
+                    if ( (fabs(Za.M()-Zmass)<fabs(zZ1.M()-Zmass)) && (Zb.M()<MZcutdown) ) passSmartCut=false;
                 }
                 else{
-                    if ( (fabs(Zb.M()-Zmass)<fabs(zZ1.M()-Zmass)) && (Za.M()<12) ) passSmartCut=false;
+                    if ( (fabs(Zb.M()-Zmass)<fabs(zZ1.M()-Zmass)) && (Za.M()<MZcutdown) ) passSmartCut=false;
                 }
             }
             if (passSmartCut==false) continue ;
-            if (zZ1.M()+zZ2.M()<MZZcut) continue;
+            // MZZcut is the lower threshold on the four-lepton invariant mass.
+            if (!h4l::passesFourLeptonMass(zZ1, zZ2, MZZcut)) continue;
             foundZZCandidate = true;
-            if (fabs(Zlist[m].M() - Zmass) < fabs(Zlist[n].M() - Zmass)){
-                Z1CanIndex.push_back(m);
-                Z2CanIndex.push_back(n);
-            }
-            else{
-                Z1CanIndex.push_back(n);
-                Z2CanIndex.push_back(m);
-            }
+            Z1CanIndex.push_back(z1Index);
+            Z2CanIndex.push_back(z2Index);
         }
     }
     if(ghosttag){
@@ -766,24 +738,22 @@ bool H4LTools::BuildZZCandidate(){
     if (flag4mu) {
         cutZZ4mu++;
     }
-    int Z1index,Z2index;
-    Z1index = Z1CanIndex[0];
-    Z2index = Z2CanIndex[0];
-    float Z2Ptsum;
-    Z2Ptsum = Zlep1pt[Z2index] + Zlep2pt[Z2index];
+    int Z1index = Z1CanIndex[0];
+    int Z2index = Z2CanIndex[0];
+    double Z1Distance = fabs(Zlist[Z1index].M()-Zmass);
+    double Z2Ptsum = Zlep1pt[Z2index] + Zlep2pt[Z2index];
     if(Z1CanIndex.size()>1){
-        for(unsigned int iz=0;iz<Z1CanIndex.size();iz++){
-            if (Z1index==Z1CanIndex[iz]){
-                if((Zlep1pt[Z2CanIndex[iz]] + Zlep2pt[Z2CanIndex[iz]])>Z2Ptsum){
-                    Z1index = Z1CanIndex[iz];
-                    Z2index = Z2CanIndex[iz];
-                    Z2Ptsum = Zlep1pt[Z2index] + Zlep2pt[Z2index];
-                }
-            }
-            if(fabs(Zlist[Z1CanIndex[iz]].M()-Zmass)<fabs(Zlist[Z1index].M()-Zmass)){
+        for(unsigned int iz=1;iz<Z1CanIndex.size();iz++){
+            const double candidateZ1Distance = fabs(Zlist[Z1CanIndex[iz]].M()-Zmass);
+            const double candidateZ2Ptsum =
+                Zlep1pt[Z2CanIndex[iz]] + Zlep2pt[Z2CanIndex[iz]];
+            if(h4l::isBetterZZCandidate(
+                candidateZ1Distance, candidateZ2Ptsum, Z1Distance, Z2Ptsum
+            )){
                 Z1index = Z1CanIndex[iz];
                 Z2index = Z2CanIndex[iz];
-                Z2Ptsum = Zlep1pt[Z2index] + Zlep2pt[Z2index];
+                Z1Distance = candidateZ1Distance;
+                Z2Ptsum = candidateZ2Ptsum;
             }
         }
     }
@@ -935,4 +905,20 @@ bool H4LTools::ZZSelection(){
 
     std::cerr << "[H4LTools] Unknown analysisMode = " << analysisMode << std::endl;
     return false;
+}
+
+float H4LTools::getDg4Constant(float ZZMass){
+    return spline_g4->Eval(ZZMass);
+}
+
+float H4LTools::getDg2Constant(float ZZMass){
+    return spline_g2->Eval(ZZMass);
+}
+
+float H4LTools::getDL1Constant(float ZZMass){
+    return spline_L1->Eval(ZZMass);
+}
+
+float H4LTools::getDL1ZgsConstant(float ZZMass){
+    return spline_L1Zgs->Eval(ZZMass);
 }
