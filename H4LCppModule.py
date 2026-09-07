@@ -10,10 +10,6 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 class HZZAnalysisCppProducer(Module):
     def __init__(self, year, cfgFile, isMC, isFSR, analysisMode, nanoVersion):
         base = "$CMSSW_BASE/src/PhysicsTools/NanoAODTools/python/postprocessing/analysis/nanoAOD_skim"
-        ROOT.gSystem.Load("%s/JHUGenMELA/MELA/data/el9_amd64_gcc12/libJHUGenMELAMELA.so" % base)
-        ROOT.gSystem.Load("%s/JHUGenMELA/MELA/data/el9_amd64_gcc12/libjhugenmela.so" % base)
-        ROOT.gSystem.Load("%s/JHUGenMELA/MELA/data/el9_amd64_gcc12/libmcfm_710.so" % base)
-        ROOT.gSystem.Load("%s/JHUGenMELA/MELA/data/el9_amd64_gcc12/libcollier.so" % base)
 
         if "/GenAnalysis_cc.so" not in ROOT.gSystem.GetLibraries():
             print("Load GenAnalysis C++ module")
@@ -43,31 +39,25 @@ class HZZAnalysisCppProducer(Module):
 
         with open(cfgFile, 'r') as ymlfile:
             cfg = yaml.full_load(ymlfile)
-            self.worker = ROOT.H4LTools(self.year, self.isMC)
+            self.worker = ROOT.H4LTools(self.isMC)
             self.worker.InitializeElecut(
                 cfg['Electron']['pTcut'], cfg['Electron']['Etacut'], cfg['Electron']['Sip3dcut'],
                 cfg['Electron']['Loosedxycut'], cfg['Electron']['Loosedzcut'],
-                cfg['Electron']['Isocut'],
                 cfg['Electron']['BDTWP']['LowEta']['LowPT'], cfg['Electron']['BDTWP']['MedEta']['LowPT'], cfg['Electron']['BDTWP']['HighEta']['LowPT'],
                 cfg['Electron']['BDTWP']['LowEta']['HighPT'], cfg['Electron']['BDTWP']['MedEta']['HighPT'], cfg['Electron']['BDTWP']['HighEta']['HighPT']
             )
             self.worker.InitializeMucut(
                 cfg['Muon']['pTcut'], cfg['Muon']['Etacut'], cfg['Muon']['Sip3dcut'],
-                cfg['Muon']['Loosedxycut'], cfg['Muon']['Loosedzcut'], cfg['Muon']['Isocut'],
-                cfg['Muon']['Tightdxycut'], cfg['Muon']['Tightdzcut'],
-                cfg['Muon']['TightTrackerLayercut'], cfg['Muon']['TightpTErrorcut'],
-                cfg['Muon']['HighPtBound']
+                cfg['Muon']['Loosedxycut'], cfg['Muon']['Loosedzcut']
             )
             self.worker.InitializeFsrPhotonCut(
                 cfg['FsrPhoton']['pTcut'], cfg['FsrPhoton']['Etacut'],
-                cfg['FsrPhoton']['Isocut'], cfg['FsrPhoton']['dRlcut'],
-                cfg['FsrPhoton']['dRlOverPtcut']
+                cfg['FsrPhoton']['Isocut']
             )
             self.worker.InitializeJetcut(cfg['Jet']['pTcut'], cfg['Jet']['Etacut'], cfg['Jet']['Ncut'])
             self.worker.InitializeEvtCut(
-                cfg['MZ1cut'], cfg['MZZcut'],
-                cfg['Higgscut']['down'], cfg['Higgscut']['up'],
-                cfg['Zmass'], cfg['MZcut']['down'], cfg['MZcut']['up']
+                cfg['MZZcut'], cfg['Higgscut']['down'], cfg['Higgscut']['up'],
+                cfg['Zmass'], cfg['MZ1cut'], cfg['MZcut']['down'], cfg['MZcut']['up']
             )
 
         self.passtrigEvts = 0
@@ -123,7 +113,6 @@ class HZZAnalysisCppProducer(Module):
             print(("Pass at least two raw jets: " + str(self.worker.passAtLeastTwoRawJets) + " Events"))
             print(("Pass at least two pt/eta jets: " + str(self.worker.passAtLeastTwoPtEtaJets) + " Events"))
             print(("Pass at least two jetId jets: " + str(self.worker.passAtLeastTwoJetIdJets) + " Events"))
-            print(("Pass at least two puId jets: " + str(self.worker.passAtLeastTwoPuIdJets) + " Events"))
             print(("Pass two good jets: " + str(self.worker.passTwoGoodJets) + " Events"))
             print(("Pass dijet: " + str(self.worker.passDijet) + " Events"))
             print(("Pass final selection: " + str(self.worker.passFinal) + " Events"))
@@ -155,12 +144,6 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("pTZ2", "F")
         self.out.branch("etaZ2", "F")
         self.out.branch("phiZ2", "F")
-        self.out.branch("D_CP", "F")
-        self.out.branch("D_0m", "F")
-        self.out.branch("D_0hp", "F")
-        self.out.branch("D_int", "F")
-        self.out.branch("D_L1", "F")
-        self.out.branch("D_L1Zg", "F")
 
         self.out.branch("massL1", "F")
         self.out.branch("pTL1", "F")
@@ -253,7 +236,6 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("eventPassAtLeastTwoRawJets", "O")
         self.out.branch("eventPassAtLeastTwoPtEtaJets", "O")
         self.out.branch("eventPassAtLeastTwoJetIdJets", "O")
-        self.out.branch("eventPassAtLeastTwoPuIdJets", "O")
         self.out.branch("eventPassTwoGoodJets", "O")
         self.out.branch("eventPassDijet", "O")
         self.out.branch("eventPassFinal", "O")
@@ -296,19 +278,9 @@ class HZZAnalysisCppProducer(Module):
         self.worker.SetAnalysisMode(self.analysisMode)
 
         isMC = self.isMC
-        self.worker.SetObjectNum(event.nElectron, event.nMuon, event.nJet, event.nFsrPhoton)
 
         if isMC:
-            #----------DY 0to40---------
-            #lhe_vpt = getattr(event, 'LHE_Vpt', 9999.0)
-            #if lhe_vpt > 40.0:
-            #    return False
-            #self.genworker.SetEventWeights(lhe_vpt)
-            #----------DY 0to40---------
-
-            self.worker.SetObjectNumGen(event.nGenPart)
             self.genworker.Initialize()
-            self.genworker.SetObjectNumGen(event.nGenPart, event.nGenJet)
 
         keepIt = False
         Lepointer = 0
@@ -351,13 +323,6 @@ class HZZAnalysisCppProducer(Module):
         phi4l = -99
         mass4l = 0
         rapidity4l = -99
-        
-        D_CP = -999
-        D_0m = -999
-        D_0hp = -999
-        D_int = -999
-        D_L1 = -999
-        D_L1Zg = -999
 
         mj1 = -999
         pTj1 = -999
@@ -443,10 +408,9 @@ class HZZAnalysisCppProducer(Module):
             for xj in genjets:
                 self.genworker.SetGenJets(xj.pt, xj.eta, xj.phi, xj.mass, xj.hadronFlavour)
             for xg in genparts:
-                self.worker.SetGenParts(xg.pt)
                 self.genworker.SetGenParts(
                     xg.pt, xg.eta, xg.phi, xg.mass,
-                    xg.pdgId, xg.status, xg.statusFlags, xg.genPartIdxMother
+                    xg.pdgId, xg.status, xg.genPartIdxMother
                 )
             for xm in muons:
                 self.worker.SetMuonsGen(xm.genPartIdx)
@@ -469,10 +433,8 @@ class HZZAnalysisCppProducer(Module):
             self.worker.SetElectrons(
                 xe.pt, xe.eta, xe.phi, xe.mass, xe.dxy, xe.dz, xe.sip3d,
                 deltaEtaSC, 
-                #mvaHZZIso, 
                 mvaNoIso,
-                mvaIso_WPHZZ,
-                xe.pdgId, xe.pfRelIso03_all
+                xe.pdgId
             )
         
         branches = [b.GetName() for b in event._tree.GetListOfBranches()]
@@ -499,15 +461,14 @@ class HZZAnalysisCppProducer(Module):
 
             self.worker.SetMuons(
                 xm.pt, xm.eta, xm.phi, xm.mass, xm.isGlobal, xm.isTracker,
-                xm.dxy, xm.dz, xm.sip3d, xm.ptErr,
-                looseId, mediumId, tightId,
-                mvaLowPtId, mvaId, mvaLowPt,
-                xm.nTrackerLayers, xm.isPFcand, xm.pdgId, xm.charge, xm.pfRelIso03_all
+                xm.dxy, xm.dz, 
+                xm.sip3d,looseId, mvaLowPt,
+                xm.isPFcand, xm.pdgId, xm.pfRelIso03_all
             )
 
         for xf in fsrPhotons:
             self.worker.SetFsrPhotons(
-                xf.dROverEt2, xf.eta, xf.phi, xf.pt,
+                xf.eta, xf.phi, xf.pt,
                 xf.relIso03, xf.electronIdx, xf.muonIdx
             )
 
@@ -520,7 +481,7 @@ class HZZAnalysisCppProducer(Module):
 
             self.worker.SetJets(
                 xj.pt, xj.eta, xj.phi, xj.mass, xj.jetId,
-                btagDeepFlavB, btagPNetB, btagRPT, btagUPT, 0.8, 7
+                btagDeepFlavB, btagPNetB, btagRPT, btagUPT
             )
 
         self.worker.BatchFsrRecovery_Run3()
@@ -851,7 +812,6 @@ class HZZAnalysisCppProducer(Module):
         eventPassAtLeastTwoRawJets = bool(self.worker.eventPassAtLeastTwoRawJets)
         eventPassAtLeastTwoPtEtaJets = bool(self.worker.eventPassAtLeastTwoPtEtaJets)
         eventPassAtLeastTwoJetIdJets = bool(self.worker.eventPassAtLeastTwoJetIdJets)
-        eventPassAtLeastTwoPuIdJets = bool(self.worker.eventPassAtLeastTwoPuIdJets)
         eventPassTwoGoodJets = bool(self.worker.eventPassTwoGoodJets)
         eventPassDijet = bool(self.worker.eventPassDijet)
         eventPassFinal = bool(self.worker.eventPassFinal)
@@ -900,13 +860,6 @@ class HZZAnalysisCppProducer(Module):
             phiZ2 = self.worker.Z2.Phi()
             massZ2 = self.worker.Z2.M()
 
-            D_CP = self.worker.D_CP
-            D_0m = self.worker.D_0m
-            D_0hp = self.worker.D_0hp
-            D_int = self.worker.D_int
-            D_L1 = self.worker.D_L1
-            D_L1Zg = self.worker.D_L1Zg
-
         if self.analysisMode == "2l2j" and eventPassZCand:
             pTZ1 = self.worker.Z1.Pt()
             etaZ1 = self.worker.Z1.Eta()
@@ -919,13 +872,6 @@ class HZZAnalysisCppProducer(Module):
             etaZ2 = -99.
             phiZ2 = -99.
             massZ2 = -99.
-
-            D_CP = -99.
-            D_0m = -99.
-            D_0hp = -99.
-            D_int = -99.
-            D_L1 = -99.
-            D_L1Zg = -99.
             
         if self.analysisMode in ["4l", "4l2j"] and foundZZCandidate:
             pTL1 = self.worker.pTL1
@@ -1035,13 +981,7 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("pTZ2", pTZ2)
         self.out.fillBranch("etaZ2", etaZ2)
         self.out.fillBranch("phiZ2", phiZ2)
-        self.out.fillBranch("D_CP", D_CP)
-        self.out.fillBranch("D_0m", D_0m)
-        self.out.fillBranch("D_0hp", D_0hp)
-        self.out.fillBranch("D_int", D_int)
-        self.out.fillBranch("D_L1", D_L1)
-        self.out.fillBranch("D_L1Zg", D_L1Zg)
-
+        
         self.out.fillBranch("passedTrig", passedTrig)
         self.out.fillBranch("passedFullSelection", passedFullSelection)
         self.out.fillBranch("passedZ4lSelection", passedZ4lSelection)
@@ -1132,7 +1072,6 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("eventPassAtLeastTwoRawJets", eventPassAtLeastTwoRawJets)
         self.out.fillBranch("eventPassAtLeastTwoPtEtaJets", eventPassAtLeastTwoPtEtaJets)
         self.out.fillBranch("eventPassAtLeastTwoJetIdJets", eventPassAtLeastTwoJetIdJets)
-        self.out.fillBranch("eventPassAtLeastTwoPuIdJets", eventPassAtLeastTwoPuIdJets)
         self.out.fillBranch("eventPassTwoGoodJets", eventPassTwoGoodJets)
         self.out.fillBranch("eventPassDijet", eventPassDijet)
         self.out.fillBranch("eventPassFinal", eventPassFinal)
@@ -1156,21 +1095,6 @@ class HZZAnalysisCppProducer(Module):
             self.out.fillBranch("recoverJet_passBtag", recoverJet_passBtag)
             self.out.fillBranch("recoverJet_passMjj", recoverJet_passMjj)
             self.out.fillBranch("recoverJet_idx", recoverJet_idx)
-        
-
-        """with open("SyncLepton2018GGH.txt", 'a') as f:
-            if(foundZZCandidate):
-                f.write(str('%.4f' % event.run)+":"+str('%.4f' % event.luminosityBlock)+":"+str('%.4f' % event.event)+":" \
-                        +str('%.4f' % self.worker.pTL1)+":"+str('%.4f' % self.worker.etaL1)+":"+str('%.4f' % self.worker.phiL1)+":"+str('%.4f' % self.worker.massL1)+":" \
-                        +str('%.4f' % self.worker.pTL2)+":"+str('%.4f' % self.worker.etaL2)+":"+str('%.4f' % self.worker.phiL2)+":"+str('%.4f' % self.worker.massL2)+":" \
-                        +str('%.4f' % self.worker.pTL3)+":"+str('%.4f' % self.worker.etaL3)+":"+str('%.4f' % self.worker.phiL3)+":"+str('%.4f' % self.worker.massL3)+":" \
-                        +str('%.4f' % self.worker.pTL4)+":"+str('%.4f' % self.worker.etaL4)+":"+str('%.4f' % self.worker.phiL4)+":"+str('%.4f' % self.worker.massL4)+"\n")
-            else:
-                f.write(str('%.4f' % event.run)+":"+str('%.4f' % event.luminosityBlock)+":"+str('%.4f' % event.event)+":" \
-                        +str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":" \
-                        +str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":" \
-                        +str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":" \
-                        +str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+":"+str('%.4f'%-1.0000)+"\n")"""
 
         return keepIt
 

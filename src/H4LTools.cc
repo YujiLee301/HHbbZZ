@@ -64,6 +64,7 @@ std::vector<unsigned int> H4LTools::goodElectrons2015_noIso_noBdt(std::vector<un
 std::vector<bool> H4LTools::pass_Ele_Id(){
     std::vector<bool> passid;
 
+
     for (unsigned int i = 0; i < Electron_pt.size(); i++){
 
         // Use SC eta as in ZZAnalysis-style electron BDT definition
@@ -80,8 +81,9 @@ std::vector<bool> H4LTools::pass_Ele_Id(){
             if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMEHP;
             if(fSCeta>=1.479) cutVal = eleBDTWPHEHP;
         }
-
+            
         passid.push_back(Electron_mvaNoIso[i] > cutVal);
+
     }
 
     return passid;
@@ -92,6 +94,7 @@ std::vector<bool> H4LTools::pass_Mu_Id() {
     std::vector<bool> passId;
 
     for (unsigned int i = 0; i < Muon_pt.size(); i++) {
+
         const bool passSIP = fabs(Muon_sip3d[i]) < 8;
         const bool passLowPtMVA = Muon_mvaLowPt[i] > -0.6;
         passId.push_back(Muon_looseId[i] && passLowPtMVA && passSIP);
@@ -159,7 +162,7 @@ unsigned H4LTools::doFsrRecovery_Run3(std::vector<unsigned int> goodfsridx, unsi
     unsigned matchedfsridx = 999;
     if(lepflavor == 11){
         for(unsigned fsridx=0; fsridx<goodfsridx.size(); fsridx++){
-            if(FsrPhoton_electronIdx[goodfsridx[fsridx]] == lepidx){
+            if(FsrPhoton_electronIdx[goodfsridx[fsridx]] == static_cast<int>(lepidx)){
                 matchedfsridx = goodfsridx[fsridx];
                 break;
             }
@@ -167,7 +170,7 @@ unsigned H4LTools::doFsrRecovery_Run3(std::vector<unsigned int> goodfsridx, unsi
     }
     if(lepflavor == 13){
         for(unsigned fsridx=0; fsridx<goodfsridx.size(); fsridx++){
-            if(FsrPhoton_muonIdx[goodfsridx[fsridx]] == lepidx){
+            if(FsrPhoton_muonIdx[goodfsridx[fsridx]] == static_cast<int>(lepidx)){
                 matchedfsridx = goodfsridx[fsridx];
                 break;
             }
@@ -315,7 +318,9 @@ void H4LTools::LeptonSelection(){
         muid.push_back(AllMuid[Muonindex[imu]]);
         Muiso.push_back(Muon_pfRelIso03_all[Muonindex[imu]]);
     }
+
     for(unsigned int ae=0; ae<Eid.size();ae++){
+
         if(Eid[ae]==true){
             nTightEle++;
             TightEleindex.push_back(ae);
@@ -357,6 +362,7 @@ void H4LTools::LeptonSelection(){
 }
 
 bool H4LTools::findZCandidate(){
+
     if (nTightEle>=4) {
         cut4e++;
         flag4e = true;
@@ -475,7 +481,7 @@ bool H4LTools::BuildBestDijet(){
         }
     }
 
-    if(jetidx.size() < JetNcut){
+    if((int)jetidx.size() < JetNcut){
         return false;
     }
 
@@ -637,6 +643,7 @@ bool H4LTools::BuildZZCandidate(){
             fourLeptons[3].charge = Zlep2chg[n];
 
             if (!h4l::passesGhostRemoval(fourLeptons)) continue;
+
             ghosttag++;
             bool nPassPt20;
             int nPassPt10;
@@ -649,7 +656,9 @@ bool H4LTools::BuildZZCandidate(){
             if (nPassPt10 < 2) continue;
             if (nPassPt20 == false) continue; //lep Pt requirements
             lepPtTag++;
+            
             if (!h4l::passesOppositeSignPairMass(fourLeptons)) continue;
+
             QCDtag++;
 
             const std::pair<unsigned int, unsigned int> orderedZs =
@@ -859,12 +868,6 @@ bool H4LTools::ZZSelection(){
         phiL2 = Zlep2phi[bestZIdx];
         massL2 = Zlep2mass[bestZIdx];
 
-        // -------Check data/MC agreement in 2l2j mode------
-        if(Z1.Pt() <= 40.0){
-            return false;
-        }
-        // --------------------------------------------------
-
         if(nRawJetsThisEvent >= 2){
             eventPassAtLeastTwoRawJets = true;
             passAtLeastTwoRawJets++;
@@ -877,6 +880,7 @@ bool H4LTools::ZZSelection(){
             eventPassAtLeastTwoJetIdJets = true;
             passAtLeastTwoJetIdJets++;
         }
+
         foundZZCandidate = BuildBestDijet();
 
         if (foundZZCandidate) {
@@ -893,7 +897,7 @@ bool H4LTools::ZZSelection(){
         if(foundZZCandidate == false){
             return false;
         }
-        if(jetidx.size()<JetNcut){
+        if((int)jetidx.size()<JetNcut){
             return false;
         }
         const bool foundDijet = BuildBestDijet();
@@ -905,20 +909,4 @@ bool H4LTools::ZZSelection(){
 
     std::cerr << "[H4LTools] Unknown analysisMode = " << analysisMode << std::endl;
     return false;
-}
-
-float H4LTools::getDg4Constant(float ZZMass){
-    return spline_g4->Eval(ZZMass);
-}
-
-float H4LTools::getDg2Constant(float ZZMass){
-    return spline_g2->Eval(ZZMass);
-}
-
-float H4LTools::getDL1Constant(float ZZMass){
-    return spline_L1->Eval(ZZMass);
-}
-
-float H4LTools::getDL1ZgsConstant(float ZZMass){
-    return spline_L1Zgs->Eval(ZZMass);
 }

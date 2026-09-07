@@ -331,7 +331,8 @@ void GenAnalysis::SetGenVariables(){
     if (nFiducialLeptons>=4 && nFiducialPtLead>=1 && nFiducialPtSublead>=2 ){
         // START FIDUCIAL EVENT TOPOLOGY CUTS
         unsigned int L1=99; unsigned int L2=99; unsigned int L3=99; unsigned int L4=99;
-        GENmass4l = -1.0;GENmass2j = -1.0;
+
+        GENmass4l = -1.0; GENmass2j = -1.0;
         GENpT4l = -1.0; GENrapidity4l = 999.;
 
         passedFiducialSelection = mZ1_mZ2(L1, L2, L3, L4, true);//makecuts=true
@@ -371,6 +372,7 @@ void GenAnalysis::SetGenVariables(){
             GENmass4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).M();
             GENpT4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).Pt();
             GENrapidity4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).Rapidity();
+
         }
         bool passedMassOS = true; bool passedDeltaR = true;
         unsigned int N=GENlep_pt.size();

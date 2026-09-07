@@ -573,56 +573,56 @@ def get_jet_correction_2022(data_tag, isMC):
     
     if isMC:
         if "pre_EE" in data_tag:
-            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/2026-04-13"
-            L1Key = "Summer22_22Sep2023_V3_MC_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer22_22Sep2023_V3_MC_L2Relative_AK4PFPuppi"
-            L3Key = "Summer22_22Sep2023_V3_MC_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer22_22Sep2023_V3_MC_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = "Summer22_22Sep2023_V3_MC_Total_AK4PFPuppi"
+            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/2026-06-05"
+            L1Key = "Summer22_22Sep2023_V4_MC_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer22_22Sep2023_V4_MC_L2Relative_AK4PFPuppi"
+            L3Key = "Summer22_22Sep2023_V4_MC_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer22_22Sep2023_V4_MC_L2L3Residual_AK4PFPuppi"
+            scaleTotalKey = "Summer22_22Sep2023_V4_MC_Total_AK4PFPuppi"
             scaleKeyRegrouped11 = [
-                f"Summer22_22Sep2023_V3_MC_{label.format(year=2022)}_AK4PFPuppi" for label in jes_systematics_11split
+                f"Summer22_22Sep2023_V4_MC_{label.format(year=2022)}_AK4PFPuppi" for label in jes_systematics_11split
             ]
             smearKey = "JERSmear"
-            JERKey = "Summer22_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi"
-            JERsfKey = "Summer22_22Sep2023_JRV1_MC_ScaleFactor_AK4PFPuppi"
+            JERKey = "Summer22_22Sep2023_JRV2_MC_PtResolution_AK4PFPuppi"
+            JERsfKey = "Summer22_22Sep2023_JRV2_MC_ScaleFactor_AK4PFPuppi"
+            JERsfUncKey = "Summer22_22Sep2023_JRV2_MC_SFUncertainty_AK4PFPuppi"
         else:
-            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/2026-04-13"
-            L1Key = "Summer22EE_22Sep2023_V3_MC_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer22EE_22Sep2023_V3_MC_L2Relative_AK4PFPuppi"
-            L3Key = "Summer22EE_22Sep2023_V3_MC_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer22EE_22Sep2023_V3_MC_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = "Summer22EE_22Sep2023_V3_MC_Total_AK4PFPuppi"
+            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/2026-06-05"
+            L1Key = "Summer22EE_22Sep2023_V4_MC_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer22EE_22Sep2023_V4_MC_L2Relative_AK4PFPuppi"
+            L3Key = "Summer22EE_22Sep2023_V4_MC_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer22EE_22Sep2023_V4_MC_L2L3Residual_AK4PFPuppi"
+            scaleTotalKey = "Summer22EE_22Sep2023_V4_MC_Total_AK4PFPuppi"
             scaleKeyRegrouped11 = [
-                f"Summer22EE_22Sep2023_V3_MC_{label.format(year='2022EE')}_AK4PFPuppi" for label in jes_systematics_11split
+                f"Summer22EE_22Sep2023_V4_MC_{label.format(year='2022EE')}_AK4PFPuppi" for label in jes_systematics_11split
             ]
             smearKey = "JERSmear"
-            JERKey = "Summer22EE_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi"
-            JERsfKey = "Summer22EE_22Sep2023_JRV1_MC_ScaleFactor_AK4PFPuppi"
+            JERKey = "Summer22EE_22Sep2023_JRV2_MC_PtResolution_AK4PFPuppi"
+            JERsfKey = "Summer22EE_22Sep2023_JRV2_MC_ScaleFactor_AK4PFPuppi"
+            JERsfUncKey = "Summer22EE_22Sep2023_JRV2_MC_SFUncertainty_AK4PFPuppi"
     else:
         # Data - JER are not applied to data
         if "pre_EE" in data_tag:
-            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/2026-04-13"
-            L1Key = "Summer22_22Sep2023_V3_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer22_22Sep2023_V3_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer22_22Sep2023_V3_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer22_22Sep2023_V3_DATA_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = None
-            scaleKeyRegrouped11 = None
-            smearKey = None
-            JERKey = None
-            JERsfKey = None
+            folderKey = "Run3-22CDSep23-Summer22-NanoAODv12/2026-06-05"
+            L1Key = "Summer22_22Sep2023_V4_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer22_22Sep2023_V4_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer22_22Sep2023_V4_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer22_22Sep2023_V4_DATA_L2L3Residual_AK4PFPuppi"
+
         else:
             # For post_EE, would need to handle different runs (E, F, G) - using E as default
-            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/2026-04-13"
-            L1Key = "Summer22EE_22Sep2023_V3_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer22EE_22Sep2023_V3_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer22EE_22Sep2023_V3_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer22EE_22Sep2023_V3_DATA_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = None
-            scaleKeyRegrouped11 = None
-            smearKey = None
-            JERKey = None
-            JERsfKey = None
+            folderKey = "Run3-22EFGSep23-Summer22EE-NanoAODv12/2026-06-05"
+            L1Key = "Summer22EE_22Sep2023_V4_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer22EE_22Sep2023_V4_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer22EE_22Sep2023_V4_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer22EE_22Sep2023_V4_DATA_L2L3Residual_AK4PFPuppi"
+        
+        scaleTotalKey = None
+        scaleKeyRegrouped11 = None
+        smearKey = None            
+        JERKey = None
+        JERsfKey = None
+        JERsfUncKey = None
     
     json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/%s/jet_jerc.json.gz" % (folderKey)
     json_JERsmear = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/jer_smear.json.gz"
@@ -636,7 +636,7 @@ def get_jet_correction_2022(data_tag, isMC):
     
     return jetJERC_natlib(
         2022, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
-        scaleKey, smearKey, JERKey, JERsfKey,
+        scaleKey, smearKey, JERKey, JERsfKey,JERsfUncKey,
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 
@@ -662,56 +662,56 @@ def get_jet_correction_2023(data_tag, isMC):
     
     if isMC:
         if "pre_BPix" in data_tag:
-            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/2026-04-13"
-            L1Key = "Summer23Prompt23_V3_MC_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer23Prompt23_V3_MC_L2Relative_AK4PFPuppi"
-            L3Key = "Summer23Prompt23_V3_MC_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer23Prompt23_V3_MC_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = "Summer23Prompt23_V3_MC_Total_AK4PFPuppi"
+            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/2026-06-05"
+            L1Key = "Summer23Prompt23_V4_MC_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer23Prompt23_V4_MC_L2Relative_AK4PFPuppi"
+            L3Key = "Summer23Prompt23_V4_MC_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer23Prompt23_V4_MC_L2L3Residual_AK4PFPuppi"
+            scaleTotalKey = "Summer23Prompt23_V4_MC_Total_AK4PFPuppi"
             scaleKeyRegrouped11 = [
-                f"Summer23Prompt23_V3_MC_{label.format(year='2023')}_AK4PFPuppi" for label in jes_systematics_11split
+                f"Summer23Prompt23_V4_MC_{label.format(year='2023')}_AK4PFPuppi" for label in jes_systematics_11split
             ]
             smearKey = "JERSmear"
-            JERKey = "Summer23Prompt23_RunCv1234_JRV1_MC_PtResolution_AK4PFPuppi"
-            JERsfKey = "Summer23Prompt23_RunCv1234_JRV1_MC_ScaleFactor_AK4PFPuppi"
+            JERKey = "Summer23Prompt23_RunCv1234_JRV2_MC_PtResolution_AK4PFPuppi"
+            JERsfKey = "Summer23Prompt23_RunCv1234_JRV2_MC_ScaleFactor_AK4PFPuppi"
+            JERsfUncKey = "Summer23Prompt23_RunCv1234_JRV2_MC_SFUncertainty_AK4PFPuppi"
         else:
-            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/2026-04-13"
-            L1Key = "Summer23BPixPrompt23_V3_MC_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer23BPixPrompt23_V3_MC_L2Relative_AK4PFPuppi"
-            L3Key = "Summer23BPixPrompt23_V3_MC_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer23BPixPrompt23_V3_MC_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = "Summer23BPixPrompt23_V3_MC_Total_AK4PFPuppi"
+            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/2026-06-05"
+            L1Key = "Summer23BPixPrompt23_V4_MC_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer23BPixPrompt23_V4_MC_L2Relative_AK4PFPuppi"
+            L3Key = "Summer23BPixPrompt23_V4_MC_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer23BPixPrompt23_V4_MC_L2L3Residual_AK4PFPuppi"
+            scaleTotalKey = "Summer23BPixPrompt23_V4_MC_Total_AK4PFPuppi"
             scaleKeyRegrouped11 = [
-                f"Summer23BPixPrompt23_V3_MC_{label.format(year='2023BPix')}_AK4PFPuppi" for label in jes_systematics_11split
+                f"Summer23BPixPrompt23_V4_MC_{label.format(year='2023BPix')}_AK4PFPuppi" for label in jes_systematics_11split
             ]
             smearKey = "JERSmear"
-            JERKey = "Summer23BPixPrompt23_RunD_JRV1_MC_PtResolution_AK4PFPuppi"
-            JERsfKey = "Summer23BPixPrompt23_RunD_JRV1_MC_ScaleFactor_AK4PFPuppi"
+            JERKey = "Summer23BPixPrompt23_RunD_JRV2_MC_PtResolution_AK4PFPuppi"
+            JERsfKey = "Summer23BPixPrompt23_RunD_JRV2_MC_ScaleFactor_AK4PFPuppi"
+            JERsfUncKey = "Summer23BPixPrompt23_RunD_JRV2_MC_SFUncertainty_AK4PFPuppi"
     else:
         # Data - JER are not applied to data
         if "pre_BPix" in data_tag:
-            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/2026-04-13"
-            L1Key = "Summer23Prompt23_V3_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer23Prompt23_V3_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer23Prompt23_V3_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer23Prompt23_V3_DATA_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = None
-            scaleKeyRegrouped11 = None
-            smearKey = None
-            JERKey = None
-            JERsfKey = None
+            folderKey = "Run3-23CSep23-Summer23-NanoAODv12/2026-06-05"
+            L1Key = "Summer23Prompt23_V4_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer23Prompt23_V4_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer23Prompt23_V4_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer23Prompt23_V4_DATA_L2L3Residual_AK4PFPuppi"
+
         else:
-            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/2026-04-13"
-            L1Key = "Summer23BPixPrompt23_V3_DATA_L1FastJet_AK4PFPuppi"
-            L2Key = "Summer23BPixPrompt23_V3_DATA_L2Relative_AK4PFPuppi"
-            L3Key = "Summer23BPixPrompt23_V3_DATA_L3Absolute_AK4PFPuppi"
-            L2L3Key = "Summer23BPixPrompt23_V3_DATA_L2L3Residual_AK4PFPuppi"
-            scaleTotalKey = None
-            scaleKeyRegrouped11 = None
-            smearKey = None
-            JERKey = None
-            JERsfKey = None
-    
+            folderKey = "Run3-23DSep23-Summer23BPix-NanoAODv12/2026-06-05"
+            L1Key = "Summer23BPixPrompt23_V4_DATA_L1FastJet_AK4PFPuppi"
+            L2Key = "Summer23BPixPrompt23_V4_DATA_L2Relative_AK4PFPuppi"
+            L3Key = "Summer23BPixPrompt23_V4_DATA_L3Absolute_AK4PFPuppi"
+            L2L3Key = "Summer23BPixPrompt23_V4_DATA_L2L3Residual_AK4PFPuppi"
+        
+        scaleTotalKey = None
+        scaleKeyRegrouped11 = None
+        smearKey = None
+        JERKey = None
+        JERsfKey = None
+        JERsfUncKey = None
+
     json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/%s/jet_jerc.json.gz" % (folderKey)
     json_JERsmear = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/jer_smear.json.gz"
     
@@ -725,7 +725,7 @@ def get_jet_correction_2023(data_tag, isMC):
     # Call jetJERC following reference pattern (positional arguments)
     return jetJERC_natlib(
         2023, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
-        scaleKey, smearKey, JERKey, JERsfKey,
+        scaleKey, smearKey, JERKey, JERsfKey, JERsfUncKey,
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 
@@ -749,33 +749,34 @@ def get_jet_correction_2024(data_tag, isMC):
     ]
     
     if isMC:
-        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-12-02"
-        L1Key = "Summer24Prompt24_V2_MC_L1FastJet_AK4PFPuppi"
-        L2Key = "Summer24Prompt24_V2_MC_L2Relative_AK4PFPuppi"
-        L3Key = "Summer24Prompt24_V2_MC_L3Absolute_AK4PFPuppi"
-        L2L3Key = "Summer24Prompt24_V2_MC_L2L3Residual_AK4PFPuppi"
-        scaleTotalKey = "Summer24Prompt24_V2_MC_Total_AK4PFPuppi"
+        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2026-06-05"
+        L1Key = "Summer24Prompt24_V3_MC_L1FastJet_AK4PFPuppi"
+        L2Key = "Summer24Prompt24_V3_MC_L2Relative_AK4PFPuppi"
+        L3Key = "Summer24Prompt24_V3_MC_L3Absolute_AK4PFPuppi"
+        L2L3Key = "Summer24Prompt24_V3_MC_L2L3Residual_AK4PFPuppi"
+        scaleTotalKey = "Summer24Prompt24_V3_MC_Total_AK4PFPuppi"
         scaleKeyRegrouped11 = [
-            f"Summer24Prompt24_V2_MC_{label.format(year='2024')}_AK4PFPuppi" for label in jes_systematics_11split
+            f"Summer24Prompt24_V3_MC_{label.format(year='2024')}_AK4PFPuppi" for label in jes_systematics_11split
         ]
         smearKey = "JERSmear"
-        # It appears the 23BPix keys are used for the following:
-        JERKey = "Summer23BPixPrompt23_RunD_JRV1_MC_PtResolution_AK4PFPuppi"
-        JERsfKey = "Summer23BPixPrompt23_RunD_JRV1_MC_ScaleFactor_AK4PFPuppi"
+        JERKey = "Summer24Prompt24_JRV1_MC_PtResolution_AK4PFPuppi"
+        JERsfKey = "Summer24Prompt24_JRV1_MC_ScaleFactor_AK4PFPuppi"
+        JERsfUncKey = "Summer24Prompt24_JRV1_MC_SFUncertainty_AK4PFPuppi"
     else:
         # Data - JER are not applied to data
-        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-12-02"
-        L1Key = "Summer24Prompt24_V2_DATA_L1FastJet_AK4PFPuppi"
-        L2Key = "Summer24Prompt24_V2_DATA_L2Relative_AK4PFPuppi"
-        L3Key = "Summer24Prompt24_V2_DATA_L3Absolute_AK4PFPuppi"
-        L2L3Key = "Summer24Prompt24_V2_DATA_L2L3Residual_AK4PFPuppi"
+        folderKey = "Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2026-06-05"
+        L1Key = "Summer24Prompt24_V3_DATA_L1FastJet_AK4PFPuppi"
+        L2Key = "Summer24Prompt24_V3_DATA_L2Relative_AK4PFPuppi"
+        L3Key = "Summer24Prompt24_V3_DATA_L3Absolute_AK4PFPuppi"
+        L2L3Key = "Summer24Prompt24_V3_DATA_L2L3Residual_AK4PFPuppi"
         scaleTotalKey = None
         scaleKeyRegrouped11 = None
         smearKey = None
         JERKey = None
         JERsfKey = None
-    
-    json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-12-02/jet_jerc.json.gz"
+        JERsfUncKey = None
+
+    json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/%s/jet_jerc.json.gz" % (folderKey)
     json_JERsmear = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/jer_smear.json.gz"
     
     # Configuration flags
@@ -788,7 +789,7 @@ def get_jet_correction_2024(data_tag, isMC):
     # Call jetJERC following reference pattern (positional arguments)
     return jetJERC_natlib(
         2024, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key,
-        scaleKey, smearKey, JERKey, JERsfKey,
+        scaleKey, smearKey, JERKey, JERsfKey, JERsfUncKey,
         overwritePt, usePhiDependentJEC, useRunDependentJEC
     )
 

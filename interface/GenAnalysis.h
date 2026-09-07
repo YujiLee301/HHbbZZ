@@ -2,6 +2,7 @@
 #define GenAnalysis_h
 
 #include <TLorentzVector.h>
+//#include <TSpline.h>
 #include <vector>
 
 class GenAnalysis{
@@ -96,6 +97,7 @@ class GenAnalysis{
         GENlep_eta.clear();GENlep_pt.clear();GENlep_phi.clear();GENlep_mass.clear();GENlep_id.clear();GENlep_MomMomId.clear();GENlep_MomId.clear();GENlep_RelIso.clear();
         flag4e=0; flag4mu=0; flag2e2mu=0;flagpassZ1=0;flagpassFid=0;
       }
+
       int motherID(int Genidx);
       int mothermotherID(int Genidx);
       void SetGenVariables();
@@ -116,6 +118,7 @@ class GenAnalysis{
       std::vector<float> GenJet_phi;
       std::vector<float> GenJet_mass;
       std::vector<int> GenJet_hadronFlavour;
+      
 };
 GenAnalysis::GenAnalysis(){
   // FIXME: Add the values to the yaml file

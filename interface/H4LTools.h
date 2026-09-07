@@ -1,14 +1,14 @@
 #ifndef H4LTools_h
 #define H4LTools_h
-
 #include <string>
 #include <TLorentzVector.h>
 #include <vector>
 
+
 class H4LTools {
     public:
       H4LTools(bool isMC_);
-      float elePtcut, MuPtcut, eleEtacut, MuEtacut, elesip3dCut, Musip3dCut,Zmass,MZcutup,MZcutdown,MZZcut,HiggscutUp,HiggscutDown;
+      float elePtcut, MuPtcut, eleEtacut, MuEtacut, elesip3dCut, Musip3dCut,Zmass,MZ1cut,MZcutup,MZcutdown,MZZcut,HiggscutUp,HiggscutDown;
       float eleLoosedxycut,eleLoosedzcut,MuLoosedxycut,MuLoosedzcut;
       float fsrphotonPtcut,fsrphotonEtacut,fsrphotonIsocut,JetPtcut,JetEtacut;
       int JetNcut;
@@ -74,14 +74,16 @@ class H4LTools {
         JetEtacut = JetEtacut_;
         JetNcut = JetNcut_;
       }
-      void InitializeEvtCut(float MZZcut_,float HiggscutDown_,float HiggscutUp_,float Zmass_,float MZcutdown_, float MZcutup_){
+      void InitializeEvtCut(float MZZcut_,float HiggscutDown_,float HiggscutUp_,float Zmass_,float MZ1cut_, float MZcutdown_, float MZcutup_){
         MZZcut = MZZcut_;
         HiggscutDown = HiggscutDown_;
         HiggscutUp = HiggscutUp_;
         Zmass = Zmass_;
+        MZ1cut = MZ1cut_;
         MZcutdown = MZcutdown_;
         MZcutup = MZcutup_;
       }
+
       void SetElectrons(float Electron_pt_, float Electron_eta_, float Electron_phi_, float Electron_mass_, float Electron_dxy_, float Electron_dz_, float Electron_sip3d_, 
                         float Electron_deltaEtaSC_, float Electron_mvaNoIso_, int Electron_pdgId_){
         Electron_pt.push_back(Electron_pt_); 
@@ -106,7 +108,6 @@ class H4LTools {
         Jet_btagPNetB.push_back(Jet_btagPNetB_);
         // NanoAODv12 / 2022 / 2023
         Jet_btagRobustParTAK4B.push_back(Jet_btagRobustParTAK4B_);
-
         // NanoAODv15 / 2024
         Jet_btagUParTAK4B.push_back(Jet_btagUParTAK4B_);
       }
@@ -118,19 +119,20 @@ class H4LTools {
                         bool Muon_isPFcand_, int Muon_pdgId_, float Muon_pfRelIso03_all_
                         ){
         Muon_pt.push_back(Muon_pt_); 
-        Muon_phi.push_back(Muon_phi_);
         Muon_eta.push_back(Muon_eta_);
+        Muon_phi.push_back(Muon_phi_);
         Muon_mass.push_back(Muon_mass_);
         Muon_isGlobal.push_back(Muon_isGlobal_);
         Muon_isTracker.push_back(Muon_isTracker_);
         Muon_dxy.push_back(Muon_dxy_);
         Muon_dz.push_back(Muon_dz_);
         Muon_sip3d.push_back(Muon_sip3d_);
+        Muon_looseId.push_back(Muon_looseId_);
+        Muon_mvaLowPt.push_back(Muon_mvaLowPt_);
         Muon_isPFcand.push_back(Muon_isPFcand_);
         Muon_pdgId.push_back(Muon_pdgId_);
         Muon_pfRelIso03_all.push_back(Muon_pfRelIso03_all_);
-        Muon_looseId.push_back(Muon_looseId_);
-        Muon_mvaLowPt.push_back(Muon_mvaLowPt_);
+
       }
       void SetMuonsGen(int Muon_genPartIdx_){
         Muon_genPartIdx.push_back(Muon_genPartIdx_);
@@ -138,6 +140,7 @@ class H4LTools {
       void SetElectronsGen(int Electron_genPartIdx_){
         Electron_genPartIdx.push_back(Electron_genPartIdx_);
       }
+
       void SetFsrPhotons(float FsrPhoton_eta_,
                         float FsrPhoton_phi_, float FsrPhoton_pt_, float FsrPhoton_relIso03_, int FsrPhoton_electronIdx_, int FsrPhoton_muonIdx_){
         FsrPhoton_phi.push_back(FsrPhoton_phi_);
@@ -147,6 +150,7 @@ class H4LTools {
         FsrPhoton_electronIdx.push_back(FsrPhoton_electronIdx_);
         FsrPhoton_muonIdx.push_back(FsrPhoton_muonIdx_);
       }
+
       bool isMC;
       std::string analysisMode;
       void SetAnalysisMode(const std::string& mode);
@@ -242,7 +246,7 @@ class H4LTools {
         Muon_isTracker.clear();Muon_isGlobal.clear();Muon_isPFcand.clear();
         Muon_looseId.clear();Muon_mvaLowPt.clear();
         Jet_pt.clear();Jet_phi.clear();Jet_eta.clear();Jet_mass.clear();Jet_btagDeepFlavB.clear();Jet_btagPNetB.clear();Jet_btagRobustParTAK4B.clear();Jet_btagUParTAK4B.clear();
-        Jet_jetId.clear(); Zlep1lepindex.clear();Zlep2lepindex.clear();
+        Jet_jetId.clear(); Zlep1lepindex.clear();Zlep2lepindex.clear(); 
         FsrPhoton_phi.clear();FsrPhoton_eta.clear();FsrPhoton_pt.clear();FsrPhoton_relIso03.clear(); FsrPhoton_electronIdx.clear(); FsrPhoton_muonIdx.clear();
         Zlist.clear();
         Zlistnofsr.clear();
@@ -361,9 +365,10 @@ H4LTools::H4LTools(bool isMC_){
   passAtLeastTwoRawJets = 0;
   passAtLeastTwoPtEtaJets = 0;
   passAtLeastTwoJetIdJets = 0;
-  
+
   nRawJetsThisEvent = 0;
   nPtEtaJetsThisEvent = 0;
   nJetIdJetsThisEvent = 0;
+
 }
 #endif
