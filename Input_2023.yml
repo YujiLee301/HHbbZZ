@@ -49,17 +49,17 @@ Electron:
   BDTWP:
     LowEta:
       LowPT:
-        0.524254
+        0.9044286167
       HighPT:        
         0.1968600840
     MedEta:
       LowPT:
-        0.142316
+        0.9094166886
       HighPT:
         0.0759172100
     HighEta:
       LowPT:
-        -0.325752
+        0.9443653660
       HighPT:
         -0.5169136775
   Isocut:
@@ -102,7 +102,7 @@ FsrPhoton:
 
 Jet:
   pTcut:
-    30
+    20
   Etacut:
     2.4
   Ncut:

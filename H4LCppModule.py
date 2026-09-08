@@ -419,21 +419,20 @@ class HZZAnalysisCppProducer(Module):
 
         branches = [b.GetName() for b in event._tree.GetListOfBranches()]
         
-        #hasHZZ = "Electron_mvaHZZIso" in branches
-        hasNoIso = "Electron_mvaNoIso" in branches
+        hasHZZ = "Electron_mvaHZZIso" in branches
         hasWPHZZ = "Electron_mvaIso_WPHZZ" in branches
         hasDeltaEtaSC = "Electron_deltaEtaSC" in branches
         for xe in electrons:
             
             deltaEtaSC = xe.deltaEtaSC if hasDeltaEtaSC else 0.
-            #mvaHZZIso = xe.mvaHZZIso if hasHZZ else -999.
-            mvaNoIso = xe.mvaNoIso if hasNoIso else -999.
+            mvaHZZIso = xe.mvaHZZIso if hasHZZ else -999.
             mvaIso_WPHZZ = bool(xe.mvaIso_WPHZZ) if hasWPHZZ else False
 
             self.worker.SetElectrons(
                 xe.pt, xe.eta, xe.phi, xe.mass, xe.dxy, xe.dz, xe.sip3d,
                 deltaEtaSC, 
-                mvaNoIso,
+                mvaHZZIso,
+                mvaIso_WPHZZ,
                 xe.pdgId
             )
         

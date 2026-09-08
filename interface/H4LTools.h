@@ -85,7 +85,7 @@ class H4LTools {
       }
 
       void SetElectrons(float Electron_pt_, float Electron_eta_, float Electron_phi_, float Electron_mass_, float Electron_dxy_, float Electron_dz_, float Electron_sip3d_, 
-                        float Electron_deltaEtaSC_, float Electron_mvaNoIso_, int Electron_pdgId_){
+                        float Electron_deltaEtaSC_, float Electron_mvaHZZIso_, bool Electron_mvaIso_WPHZZ_, int Electron_pdgId_){
         Electron_pt.push_back(Electron_pt_); 
         Electron_phi.push_back(Electron_phi_);
         Electron_eta.push_back(Electron_eta_);
@@ -94,7 +94,8 @@ class H4LTools {
         Electron_dz.push_back(Electron_dz_);
         Electron_sip3d.push_back(Electron_sip3d_);
         Electron_deltaEtaSC.push_back(Electron_deltaEtaSC_);
-        Electron_mvaNoIso.push_back(Electron_mvaNoIso_);
+        Electron_mvaHZZIso.push_back(Electron_mvaHZZIso_);
+        Electron_mvaIso_WPHZZ.push_back(Electron_mvaIso_WPHZZ_);
         Electron_pdgId.push_back(Electron_pdgId_);
       }
 
@@ -161,7 +162,7 @@ class H4LTools {
       std::vector<unsigned int> goodLooseMuons2012();
       std::vector<unsigned int> goodMuons2015_noIso_noPf(std::vector<unsigned int> Muonindex);
       std::vector<unsigned int> goodElectrons2015_noIso_noBdt(std::vector<unsigned int> Electronindex);
-      std::vector<bool> pass_Ele_Id();
+      std::vector<bool> pass_Ele_Id(int nanoVersion);
       std::vector<bool> pass_Mu_Id();
       std::vector<unsigned int> goodFsrPhotons();
       unsigned doFsrRecovery_Run3(std::vector<unsigned int> goodfsridx, unsigned lepidx, int lepflavor);//lepflavor 11 or 13
@@ -239,7 +240,8 @@ class H4LTools {
         MulistFsr.clear();
         Electron_pt.clear();Electron_phi.clear();Electron_eta.clear();Electron_mass.clear();Electron_dxy.clear();Electron_dz.clear();Electron_sip3d.clear();
         Electron_deltaEtaSC.clear();
-        Electron_mvaNoIso.clear();
+        Electron_mvaHZZIso.clear();
+        Electron_mvaIso_WPHZZ.clear();
         Electron_pdgId.clear();Electron_genPartIdx.clear();
         Muon_pt.clear();Muon_phi.clear();Muon_eta.clear();Muon_mass.clear();Muon_dxy.clear();Muon_dz.clear();Muon_sip3d.clear();Muon_pfRelIso03_all.clear();
         Muon_genPartIdx.clear();Muon_pdgId.clear();
@@ -314,7 +316,8 @@ class H4LTools {
     private:
       std::vector<float> Electron_pt,Electron_phi,Electron_eta,Electron_mass,Electron_dxy,Electron_dz,Electron_sip3d;
       std::vector<float> Electron_deltaEtaSC;
-      std::vector<float> Electron_mvaNoIso;
+      std::vector<float> Electron_mvaHZZIso;
+      std::vector<bool> Electron_mvaIso_WPHZZ;
       std::vector<int> Electron_pdgId,Electron_genPartIdx;
 
       std::vector<float> Jet_pt,Jet_phi,Jet_eta,Jet_mass,Jet_btagDeepFlavB,Jet_btagPNetB,Jet_btagRobustParTAK4B,Jet_btagUParTAK4B;

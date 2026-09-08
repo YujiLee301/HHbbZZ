@@ -64,7 +64,6 @@ std::vector<unsigned int> H4LTools::goodElectrons2015_noIso_noBdt(std::vector<un
 std::vector<bool> H4LTools::pass_Ele_Id(){
     std::vector<bool> passid;
 
-
     for (unsigned int i = 0; i < Electron_pt.size(); i++){
 
         // Use SC eta as in ZZAnalysis-style electron BDT definition
@@ -72,19 +71,22 @@ std::vector<bool> H4LTools::pass_Ele_Id(){
 
         float cutVal = 0.0;
             
-        if(Electron_pt[i]<10){
-            if(fSCeta<0.8) cutVal = eleBDTWPLELP;
-            if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMELP;
-            if(fSCeta>=1.479) cutVal = eleBDTWPHELP;
+        if (nanoVersion < 14){
+            if(Electron_pt[i]<10){
+                if(fSCeta<0.8) cutVal = eleBDTWPLELP;
+                if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMELP;
+                if(fSCeta>=1.479) cutVal = eleBDTWPHELP;
+            }
+            else{
+                if(fSCeta<0.8) cutVal = eleBDTWPLEHP;
+                if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMEHP;
+                if(fSCeta>=1.479) cutVal = eleBDTWPHEHP;
+            }
+            passid.push_back(Electron_mvaHZZIso[i] > cutVal);
         }
         else{
-            if(fSCeta<0.8) cutVal = eleBDTWPLEHP;
-            if((fSCeta>=0.8)&&(fSCeta<1.479)) cutVal = eleBDTWPMEHP;
-            if(fSCeta>=1.479) cutVal = eleBDTWPHEHP;
+            passid.push_back(Electron_mvaIso_WPHZZ[i]);
         }
-            
-        passid.push_back(Electron_mvaNoIso[i] > cutVal);
-
     }
 
     return passid;
@@ -276,7 +278,7 @@ void H4LTools::LeptonSelection(){
     const std::vector<unsigned int> step1Mu = goodLooseMuons2012();
     const std::vector<unsigned int> Electronindex = goodElectrons2015_noIso_noBdt(step1Ele);
     const std::vector<unsigned int> Muonindex = goodMuons2015_noIso_noPf(step1Mu);
-    const std::vector<bool> AllEid = pass_Ele_Id();
+    const std::vector<bool> AllEid = pass_Ele_Id(nanoVersion);
     const std::vector<bool> AllMuid = pass_Mu_Id();
     std::vector<unsigned int> tighteleforjetidx;
     std::vector<unsigned int> tightmuforjetidx;
