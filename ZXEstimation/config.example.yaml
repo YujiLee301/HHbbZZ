@@ -1,0 +1,221 @@
+# Copy this file, set SKIM_DIR (or replace the paths), and fill the null values.
+# Paths are relative to this YAML, not to the shell working directory.
+version: 1
+tree: Events
+output: output
+
+eras:
+  2022preEE:
+    lumi_fb: null  # Integrated luminosity of the DATA supplied below.
+
+# Insertion order is the signed MC-stack drawing order.
+processes:
+  DY: {label: 'DY', color: '#F2C14E'}
+  TTbar: {label: 't#bar{t}', color: '#E77C8E'}
+  WZ: {label: 'WZ', color: '#76B7B2'}
+  ZZ: {label: 'ZZ', color: '#6A8FD4'}
+
+# A sample entry is ONE dataset/normalization denominator. For qqZZ, ggZZ,
+# different TT decay modes, etc., add entries with distinct names but the same
+# process. Split/extension files of the same dataset can share one entry.
+samples:
+  - name: data_2022preEE
+    era: 2022preEE
+    kind: data
+    files: ['${SKIM_DIR}/data/*.root']
+    selection: '1'  # Put primary-dataset trigger routing here if needed.
+  - name: zz_2022preEE
+    era: 2022preEE
+    kind: mc
+    process: ZZ
+    files: ['${SKIM_DIR}/ZZ/*.root']
+    weight: Weight  # Can be e.g. 'Weight * puWeight'; only use existing branches.
+    normalization: {mode: xsec, xsec_pb: null, sum_gen_weights: null, k_factor: 1.0, filter_efficiency: 1.0}
+  - name: wz_2022preEE
+    era: 2022preEE
+    kind: mc
+    process: WZ
+    files: ['${SKIM_DIR}/WZ/*.root']
+    weight: Weight
+    normalization: {mode: xsec, xsec_pb: null, sum_gen_weights: null, k_factor: 1.0, filter_efficiency: 1.0}
+  - name: ttbar_2022preEE
+    era: 2022preEE
+    kind: mc
+    process: TTbar
+    files: ['${SKIM_DIR}/TTbar/*.root']
+    weight: Weight
+    normalization: {mode: xsec, xsec_pb: null, sum_gen_weights: null, k_factor: 1.0, filter_efficiency: 1.0}
+  - name: dy_2022preEE
+    era: 2022preEE
+    kind: mc
+    process: DY
+    files: ['${SKIM_DIR}/DY/*.root']
+    weight: Weight
+    normalization: {mode: xsec, xsec_pb: null, sum_gen_weights: null, k_factor: 1.0, filter_efficiency: 1.0}
+
+selection:
+  cut: 'passedTrig && !passedFullSelection'
+  jet_count: njets_pt30_eta4p7
+  min_jets: 2  # Cannot be set below 2; this counts skim-selected, cleaned jets.
+  deduplicate_data: true
+  event_id: [run, luminosityBlock, event]
+
+regions:
+  2P1F: {role: rate_fail, branch: passedZXCR2P1FSelection, cut: '1'}
+  3P0F: {role: rate_pass, branch: passedZXCR3P0FSelection, cut: '1'}
+  2P2F: {role: double_fail, branch: passedZXCR2P2FSelection, cut: '1'}
+  3P1F: {role: single_fail, branch: passedZXCR3P1FSelection, cut: '1'}
+
+# These expressions work even when finalState was removed by outputbranchsel.
+# For the 3-lepton sample, the label denotes the 4l channel supplied by its probe.
+channels:
+  inclusive: '1'
+  4e: 'abs(ZXCRPdgIdL1)==11 && abs(ZXCRPdgIdL3)==11'
+  4mu: 'abs(ZXCRPdgIdL1)==13 && abs(ZXCRPdgIdL3)==13'
+  2e2mu: 'abs(ZXCRPdgIdL1)==11 && abs(ZXCRPdgIdL3)==13'
+  2mu2e: 'abs(ZXCRPdgIdL1)==13 && abs(ZXCRPdgIdL3)==11'
+
+probes:
+  - {pt: pTL3, eta: etaL3, pdgid: ZXCRPdgIdL3, tight: ZXCRTightL3}
+  - {pt: pTL4, eta: etaL4, pdgid: ZXCRPdgIdL4, tight: ZXCRTightL4}
+
+fake_rate:
+  source: measure  # external: reuse a measured TH2 rate and validity mask.
+  subtract_processes: [WZ, ZZ]  # Prompt contamination of the 3-lepton rate sample.
+  pt_overflow: last_bin  # High-pT probes share the last measurement/application bin.
+  binning:
+    11: {pt: [7, 10, 20, 30, 50, 100], abs_eta: [0, 1.479, 2.5]}
+    13: {pt: [5, 10, 20, 30, 50, 100], abs_eta: [0, 1.2, 2.4]}
+  external:
+    file: external_fake_rates.root
+    rate: '{era}/{flavor}/rate'
+    valid: '{era}/{flavor}/valid'
+
+estimation:
+  # Nominal OS equation: data(3P1F)*r - ZZ(3P1F)*r - data(2P2F)*r1*r2.
+  # WZ, DY and TTbar are part of the reducible estimate, NOT subtracted here.
+  subtract_single: [ZZ]
+  subtract_double: []  # Optional explicit generalization for prompt contamination.
+
+plotting:
+  regions: [2P1F, 3P0F, 2P2F, 3P1F]
+  formats: [png, pdf]
+  ratio_range: [0, 2]
+  label: 'HHbbZZ control regions'
+
+# TTreeFormula scalar expressions, explicit bin edges, applicability, and labels.
+# estimate:true also builds the corresponding Z+X signal-region template.
+# Under/overflow is folded by default. Set fold:false to retain flow bins instead.
+variables:
+  massZ1:
+    expression: massZ1
+    label: 'm(Z_{1}) [GeV]'
+    edges: [40, 50, 60, 70, 80, 85, 90, 95, 100, 110, 120]
+    regions: &all [2P1F, 3P0F, 2P2F, 3P1F]
+    estimate: true
+  massZ2:
+    expression: massZ2
+    label: 'm(Z_{2}) [GeV]'
+    edges: [12, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120]
+    regions: &four [2P2F, 3P1F]
+    estimate: true
+  mass4l:
+    expression: mass4l
+    label: 'm(4l) [GeV]'
+    edges: [70, 90, 105, 115, 125, 135, 145, 160, 180, 220, 300, 500]
+    regions: *four
+    estimate: true
+  pT4l:
+    expression: pT4l
+    label: 'p_{T}(4l) [GeV]'
+    edges: [0, 20, 40, 60, 80, 100, 150, 200, 300, 500]
+    regions: *four
+    estimate: true
+  invjj:
+    expression: invjj
+    label: 'm(jj) [GeV]'
+    edges: [0, 30, 50, 70, 90, 110, 130, 150, 180, 220, 300, 500]
+    regions: *all
+    estimate: true
+  njets:
+    expression: njets_pt30_eta4p7
+    label: 'N(selected jets)'
+    edges: [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 8.5]
+    regions: *all
+    estimate: true
+  pTZ1:
+    expression: pTZ1
+    label: 'p_{T}(Z_{1}) [GeV]'
+    edges: [0, 20, 40, 60, 80, 100, 150, 200, 300]
+    regions: *all
+    estimate: true
+  pTZ2:
+    expression: pTZ2
+    label: 'p_{T}(Z_{2}) [GeV]'
+    edges: [0, 20, 40, 60, 80, 100, 150, 200, 300]
+    regions: *four
+    estimate: true
+  pTL1:
+    expression: pTL1
+    label: 'p_{T}(l_{1}) [GeV]'
+    edges: [0, 10, 20, 30, 40, 50, 70, 100, 150, 250]
+    regions: *all
+  pTL2:
+    expression: pTL2
+    label: 'p_{T}(l_{2}) [GeV]'
+    edges: [0, 10, 20, 30, 40, 50, 70, 100, 150, 250]
+    regions: *all
+  pTL3:
+    expression: pTL3
+    label: 'p_{T}(probe 1) [GeV]'
+    edges: [5, 7, 10, 15, 20, 30, 50, 70, 100, 150]
+    regions: *all
+    estimate: true
+  pTL4:
+    expression: pTL4
+    label: 'p_{T}(probe 2) [GeV]'
+    edges: [5, 7, 10, 15, 20, 30, 50, 70, 100, 150]
+    regions: *four
+    estimate: true
+  etaL1:
+    expression: etaL1
+    label: '#eta(l_{1})'
+    edges: &eta [-2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5]
+    regions: *all
+  etaL2:
+    expression: etaL2
+    label: '#eta(l_{2})'
+    edges: *eta
+    regions: *all
+  etaL3:
+    expression: etaL3
+    label: '#eta(probe 1)'
+    edges: *eta
+    regions: *all
+  etaL4:
+    expression: etaL4
+    label: '#eta(probe 2)'
+    edges: *eta
+    regions: *four
+  pTj1:
+    expression: pTj1
+    label: 'p_{T}(j_{1}) [GeV]'
+    edges: &jetpt [0, 20, 30, 40, 50, 70, 100, 150, 200, 300, 500]
+    regions: *all
+    estimate: true
+  pTj2:
+    expression: pTj2
+    label: 'p_{T}(j_{2}) [GeV]'
+    edges: *jetpt
+    regions: *all
+    estimate: true
+  etaj1:
+    expression: etaj1
+    label: '#eta(j_{1})'
+    edges: *eta
+    regions: *all
+  etaj2:
+    expression: etaj2
+    label: '#eta(j_{2})'
+    edges: *eta
+    regions: *all
