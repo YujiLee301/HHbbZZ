@@ -175,8 +175,8 @@ def main():
     if analysisMode == "2l2j":
         preselection_cut = "Sum$(Muon_pt>20) + Sum$(Electron_pt>25) >= 2"
     else:
-        # for 4l and 4l2j
-        preselection_cut = "Sum$(Muon_pt>3) + Sum$(Electron_pt>5) >= 4"
+        # Keep three-lepton Z+X 2P1F events as well as the 4l/4l2j candidates.
+        preselection_cut = "Sum$(Muon_pt>3) + Sum$(Electron_pt>5) >= 3"
 
     # main analysis module
     modulesToRun.append(HZZAnalysisCppProducer(year, cfgFile, isMC, isFSR, analysisMode, nanoVersion))

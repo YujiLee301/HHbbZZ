@@ -199,6 +199,13 @@ class HZZAnalysisCppProducer(Module):
         self.out.branch("passedZ4lZ1LSelection", "O")
         self.out.branch("passedZ4lZXCRSelection", "O")
         self.out.branch("passedZXCRSelection", "O")
+        self.out.branch("passedZXCR2P1FSelection", "O")
+        self.out.branch("passedZXCR2P2FSelection", "O")
+        self.out.branch("passedZXCR3P1FSelection", "O")
+        self.out.branch("nZXCRFailedLeptons", "I")
+        for leg in range(1, 5):
+            self.out.branch("ZXCRPdgIdL%d" % leg, "I")
+            self.out.branch("ZXCRTightL%d" % leg, "O")
         self.out.branch("passedFiducialSelection", "O")
 
         GENHlepNum = 4
@@ -487,6 +494,16 @@ class HZZAnalysisCppProducer(Module):
         self.worker.LeptonSelection()
 
         hasTwoTightLeps = ((self.worker.nTightEle >= 2) or (self.worker.nTightMu >= 2))
+        foundZZCandidate = self.worker.ZZSelection() if hasTwoTightLeps else False
+        met = (float(event.PuppiMET_pt) if "PuppiMET_pt" in branches else
+               float(event.MET_pt) if "MET_pt" in branches else float("nan"))
+        foundZXCRCandidate = self.worker.ZXCRSelection(met) if hasTwoTightLeps else False
+        passedZ1LSelection = bool(self.worker.passedZXCR2P1FSelection)
+        passedZXCRSelection = bool(self.worker.passedZXCR2P2FSelection or
+                                   self.worker.passedZXCR3P1FSelection)
+        if foundZXCRCandidate:
+            keepIt = True
+
         if isMC:
             self.genworker.SetGenVariables()
             GENmass4l = self.genworker.GENmass4l
@@ -625,10 +642,6 @@ class HZZAnalysisCppProducer(Module):
                 for i in range(len(GENjet_Hindex_vec)):
                     GENjet_Hindex.append(GENjet_Hindex_vec[i])
 
-        foundZZCandidate = False
-        if hasTwoTightLeps:
-            foundZZCandidate = self.worker.ZZSelection()
-        
         # ============================================================
         # Extra jet recovery for original 1-jet events
         #
@@ -847,17 +860,23 @@ class HZZAnalysisCppProducer(Module):
             finalState = 3
         if self.worker.RecoTwoMuTwoEEvent:
             finalState = 4
+        if foundZXCRCandidate:
+            first_flavor = abs(int(self.worker.ZXCRPdgId[0]))
+            second_flavor = abs(int(self.worker.ZXCRPdgId[2]))
+            finalState = {(13, 13): 1, (11, 11): 2,
+                          (11, 13): 3, (13, 11): 4}[(first_flavor, second_flavor)]
 
-        if foundZZCandidate and self.analysisMode in ["4l", "4l2j"]:
+        if (foundZZCandidate or foundZXCRCandidate) and self.analysisMode in ["4l", "4l2j"]:
             pTZ1 = self.worker.Z1.Pt()
             etaZ1 = self.worker.Z1.Eta()
             phiZ1 = self.worker.Z1.Phi()
             massZ1 = self.worker.Z1.M()
 
-            pTZ2 = self.worker.Z2.Pt()
-            etaZ2 = self.worker.Z2.Eta()
-            phiZ2 = self.worker.Z2.Phi()
-            massZ2 = self.worker.Z2.M()
+            if not passedZ1LSelection:
+                pTZ2 = self.worker.Z2.Pt()
+                etaZ2 = self.worker.Z2.Eta()
+                phiZ2 = self.worker.Z2.Phi()
+                massZ2 = self.worker.Z2.M()
 
         if self.analysisMode == "2l2j" and eventPassZCand:
             pTZ1 = self.worker.Z1.Pt()
@@ -872,7 +891,7 @@ class HZZAnalysisCppProducer(Module):
             phiZ2 = -99.
             massZ2 = -99.
             
-        if self.analysisMode in ["4l", "4l2j"] and foundZZCandidate:
+        if self.analysisMode in ["4l", "4l2j"] and (foundZZCandidate or foundZXCRCandidate):
             pTL1 = self.worker.pTL1
             etaL1 = self.worker.etaL1
             phiL1 = self.worker.phiL1
@@ -893,21 +912,21 @@ class HZZAnalysisCppProducer(Module):
             phiL4 = self.worker.phiL4
             massL4 = self.worker.massL4
             
-            if pTL2 > pTL1:
+            if foundZZCandidate and pTL2 > pTL1:
                 pTL1, pTL2 = pTL2, pTL1
                 etaL1, etaL2 = etaL2, etaL1
                 phiL1, phiL2 = phiL2, phiL1
                 massL1, massL2 = massL2, massL1
                 lep_Hindex[0], lep_Hindex[1] = lep_Hindex[1], lep_Hindex[0]
 
-            if pTL4 > pTL3:
+            if foundZZCandidate and pTL4 > pTL3:
                 pTL3, pTL4 = pTL4, pTL3
                 etaL3, etaL4 = etaL4, etaL3
                 phiL3, phiL4 = phiL4, phiL3
                 massL3, massL4 = massL4, massL3
                 lep_Hindex[2], lep_Hindex[3] = lep_Hindex[3], lep_Hindex[2]
 
-        if self.analysisMode in ["2l2j", "4l2j"] and foundZZCandidate:
+        if (self.analysisMode in ["2l2j", "4l2j"] and foundZZCandidate) or foundZXCRCandidate:
             pTj1 = self.worker.pTj1
             etaj1 = self.worker.etaj1
             phij1 = self.worker.phij1
@@ -930,7 +949,7 @@ class HZZAnalysisCppProducer(Module):
 
             invjj = self.worker.invjj
 
-        if self.analysisMode in ["4l", "4l2j"] and passedFullSelection:
+        if self.analysisMode in ["4l", "4l2j"] and (passedFullSelection or passedZXCRSelection):
             pT4l = self.worker.ZZsystem.Pt()
             eta4l = self.worker.ZZsystem.Eta()
             phi4l = self.worker.ZZsystem.Phi()
@@ -939,18 +958,18 @@ class HZZAnalysisCppProducer(Module):
 
         njets_pt30_eta4p7 = self.worker.njets_pt30_eta4p7
 
-        if self.analysisMode in ["4l", "4l2j"] and (self.worker.isFSR == False and passedFullSelection):
+        if self.analysisMode in ["4l", "4l2j"] and (self.worker.isFSR == False and (passedFullSelection or passedZXCRSelection)):
             pT4l = self.worker.ZZsystemnofsr.Pt()
             eta4l = self.worker.ZZsystemnofsr.Eta()
             phi4l = self.worker.ZZsystemnofsr.Phi()
             mass4l = self.worker.ZZsystemnofsr.M()
             rapidity4l = self.worker.ZZsystemnofsr.Rapidity()
             
-        if self.worker.flag4e:
+        if (finalState == 2 if passedZXCRSelection else self.worker.flag4e):
             mass4e = mass4l
-        if self.worker.flag2e2mu:
+        if (finalState in (3, 4) if passedZXCRSelection else self.worker.flag2e2mu):
             mass2e2mu = mass4l
-        if self.worker.flag4mu:
+        if (finalState == 1 if passedZXCRSelection else self.worker.flag4mu):
             mass4mu = mass4l
             
         if self.isMC:
@@ -987,6 +1006,13 @@ class HZZAnalysisCppProducer(Module):
         self.out.fillBranch("passedZ4lZ1LSelection", passedZ4lZ1LSelection)
         self.out.fillBranch("passedZ4lZXCRSelection", passedZ4lZXCRSelection)
         self.out.fillBranch("passedZXCRSelection", passedZXCRSelection)
+        self.out.fillBranch("passedZXCR2P1FSelection", bool(self.worker.passedZXCR2P1FSelection))
+        self.out.fillBranch("passedZXCR2P2FSelection", bool(self.worker.passedZXCR2P2FSelection))
+        self.out.fillBranch("passedZXCR3P1FSelection", bool(self.worker.passedZXCR3P1FSelection))
+        self.out.fillBranch("nZXCRFailedLeptons", int(self.worker.nZXCRFailedLeptons))
+        for leg in range(1, 5):
+            self.out.fillBranch("ZXCRPdgIdL%d" % leg, int(self.worker.ZXCRPdgId[leg - 1]))
+            self.out.fillBranch("ZXCRTightL%d" % leg, bool(self.worker.ZXCRTight[leg - 1]))
         self.out.fillBranch("passedFiducialSelection", passedFiducialSelection)
         self.out.fillBranch("EvtNum", EvtNum)
 

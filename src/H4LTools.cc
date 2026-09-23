@@ -61,7 +61,7 @@ std::vector<unsigned int> H4LTools::goodElectrons2015_noIso_noBdt(std::vector<un
     return bestElectronindex;
 }
 
-std::vector<bool> H4LTools::pass_Ele_Id(){
+std::vector<bool> H4LTools::pass_Ele_Id(int nanoVersion){
     std::vector<bool> passid;
 
     for (unsigned int i = 0; i < Electron_pt.size(); i++){
@@ -354,6 +354,40 @@ void H4LTools::LeptonSelection(){
             Lepointer++;
             if (isMC) lep_genindex.push_back(Muon_genPartIdx[Muonindex[amu]]);
             else lep_genindex.push_back(-1);
+        }
+    }
+    // Keep loose probes and the SAME final ID/isolation decision used above.
+    // Retain original collection indices and truth matching for the probes.
+    for (unsigned int i = 0; i < Electronindex.size(); ++i){
+        const unsigned int source = Electronindex[i];
+        if (std::fabs(Electron_sip3d[source]) >= elesip3dCut) continue;
+        const auto tight = std::find(TightEleindex.begin(), TightEleindex.end(), i);
+        const bool pass = tight != TightEleindex.end();
+        ZXLooseLeptons.push_back({Elelist[i], isFSR ? ElelistFsr[i] : Elelist[i],
+            Electron_pdgId[source], static_cast<int>(source),
+            pass ? TightElelep_index[tight - TightEleindex.begin()] : -1,
+            isMC ? Electron_genPartIdx[source] : -1, pass});
+    }
+    for (unsigned int i = 0; i < Muonindex.size(); ++i){
+        const unsigned int source = Muonindex[i];
+        if (std::fabs(Muon_sip3d[source]) >= Musip3dCut) continue;
+        const auto tight = std::find(TightMuindex.begin(), TightMuindex.end(), i);
+        const bool pass = tight != TightMuindex.end();
+        ZXLooseLeptons.push_back({Mulist[i], isFSR ? MulistFsr[i] : Mulist[i],
+            Muon_pdgId[source], static_cast<int>(source),
+            pass ? TightMulep_index[tight - TightMuindex.begin()] : -1,
+            isMC ? Muon_genPartIdx[source] : -1, pass});
+    }
+    // The reference CR loose list retains cross-cleaned electrons as fails.
+    for (auto& electron : ZXLooseLeptons){
+        if (std::abs(electron.pdgId) != 11) continue;
+        for (const auto& muon : ZXLooseLeptons){
+            if (std::abs(muon.pdgId) == 13 && muon.tight &&
+                electron.bareP4.DeltaR(muon.bareP4) < 0.05){
+                electron.tight = false;
+                electron.lepIndex = -1;
+                break;
+            }
         }
     }
     if (analysisMode == "2l2j") {
@@ -823,6 +857,78 @@ bool H4LTools::BuildZZCandidate(){
     massL4 = Lep4.M();
 
     return foundZZCandidate;
+}
+
+bool H4LTools::ZXCRSelection(float met){
+    passedZXCR2P1FSelection = false;
+    passedZXCR2P2FSelection = false;
+    passedZXCR3P1FSelection = false;
+    nZXCRFailedLeptons = 0;
+    // Call after ZZSelection: a tight 4l candidate vetoes CR even if its jets fail.
+    if (analysisMode != "4l" && analysisMode != "4l2j") return false;
+    if (RecoFourEEvent || RecoFourMuEvent || RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent) return false;
+    const auto candidate = h4l::selectZXCandidate(
+        ZXLooseLeptons, met, Zmass, MZcutdown, MZcutup, MZ1cut, MZZcut);
+    if (!candidate.region) return false;
+
+    // Apply the framework jet pT/eta and ID cuts, then clean against ALL
+    // candidate leptons, including failing probes, using their selected p4.
+    std::vector<unsigned int> cleanJets;
+    for (unsigned int j = 0; j < Jet_pt.size(); ++j){
+        if (!(Jet_pt[j] > JetPtcut && std::fabs(Jet_eta[j]) < JetEtacut && Jet_jetId[j] > 0)) continue;
+        TLorentzVector jet;
+        jet.SetPtEtaPhiM(Jet_pt[j], Jet_eta[j], Jet_phi[j], Jet_mass[j]);
+        bool overlap = false;
+        for (const auto index : candidate.leptons){
+            if (jet.DeltaR(ZXLooseLeptons[index].p4) < 0.4) { overlap = true; break; }
+        }
+        if (!overlap) cleanJets.push_back(j);
+    }
+    if (static_cast<int>(cleanJets.size()) < std::max(2, JetNcut)) return false;
+    jetidx = cleanJets;
+    njets_pt30_eta4p7 = cleanJets.size();
+    if (!BuildBestDijet()) return false;
+
+    const auto& l1 = ZXLooseLeptons[candidate.leptons[0]];
+    const auto& l2 = ZXLooseLeptons[candidate.leptons[1]];
+    Z1 = l1.p4 + l2.p4;
+    Z1nofsr = l1.bareP4 + l2.bareP4;
+    Z1flav = std::abs(l1.pdgId);
+    Z2.SetPtEtaPhiM(0, 0, 0, 0);
+    Z2nofsr.SetPtEtaPhiM(0, 0, 0, 0);
+    ZZsystem.SetPtEtaPhiM(0, 0, 0, 0);
+    ZZsystemnofsr.SetPtEtaPhiM(0, 0, 0, 0);
+    float* pt[] = {&pTL1, &pTL2, &pTL3, &pTL4};
+    float* eta[] = {&etaL1, &etaL2, &etaL3, &etaL4};
+    float* phi[] = {&phiL1, &phiL2, &phiL3, &phiL4};
+    float* mass[] = {&massL1, &massL2, &massL3, &massL4};
+    for (unsigned int i = 0; i < 4; ++i){
+        lep_Hindex[i] = -1;
+        *pt[i] = *eta[i] = *phi[i] = *mass[i] = -999.;
+        ZXCRPdgId[i] = 0;
+        ZXCRTight[i] = false;
+        if (i >= candidate.leptons.size()) continue;
+        const auto& lepton = ZXLooseLeptons[candidate.leptons[i]];
+        *pt[i] = lepton.p4.Pt(); *eta[i] = lepton.p4.Eta();
+        *phi[i] = lepton.p4.Phi(); *mass[i] = lepton.p4.M();
+        ZXCRPdgId[i] = lepton.pdgId;
+        ZXCRTight[i] = lepton.tight;
+        lep_Hindex[i] = lepton.lepIndex;
+        if (!lepton.tight){
+            ++nZXCRFailedLeptons;
+            lep_Hindex[i] = Lepointer++;
+            lep_genindex.push_back(lepton.genIndex);
+        }
+        if (candidate.leptons.size() == 4){
+            ZZsystem += lepton.p4;
+            ZZsystemnofsr += lepton.bareP4;
+            if (i >= 2){ Z2 += lepton.p4; Z2nofsr += lepton.bareP4; }
+        }
+    }
+    passedZXCR2P1FSelection = candidate.region == 1;
+    passedZXCR2P2FSelection = candidate.region == 2;
+    passedZXCR3P1FSelection = candidate.region == 3;
+    return true;
 }
 
 bool H4LTools::ZZSelection(){

@@ -3,6 +3,7 @@
 #include <string>
 #include <TLorentzVector.h>
 #include <vector>
+#include "ZXCRSelection.h"
 
 
 class H4LTools {
@@ -158,6 +159,14 @@ class H4LTools {
       void SetNanoVersion(int v){ nanoVersion = v; }
       bool BuildZZCandidate();
       bool BuildBestDijet();
+      bool ZXCRSelection(float met);
+      bool passedZXCR2P1FSelection = false;
+      bool passedZXCR2P2FSelection = false;
+      bool passedZXCR3P1FSelection = false;
+      int nZXCRFailedLeptons = 0;
+      std::vector<h4l::ZXLepton> ZXLooseLeptons;
+      int ZXCRPdgId[4] = {0, 0, 0, 0};
+      bool ZXCRTight[4] = {false, false, false, false};
       std::vector<unsigned int> goodLooseElectrons2012();
       std::vector<unsigned int> goodLooseMuons2012();
       std::vector<unsigned int> goodMuons2015_noIso_noPf(std::vector<unsigned int> Muonindex);
@@ -234,6 +243,12 @@ class H4LTools {
       std::vector<int> TightEleindex;
       std::vector<int> TightMuindex;
       void Initialize(){
+        passedZXCR2P1FSelection = false;
+        passedZXCR2P2FSelection = false;
+        passedZXCR3P1FSelection = false;
+        nZXCRFailedLeptons = 0;
+        ZXLooseLeptons.clear();
+        for (int i = 0; i < 4; ++i){ ZXCRPdgId[i] = 0; ZXCRTight[i] = false; }
         Elelist.clear();
         Mulist.clear();
         ElelistFsr.clear();
